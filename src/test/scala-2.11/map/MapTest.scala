@@ -1,12 +1,10 @@
 package map
 
-import automata.AutomataTopology
-
-
 object MapTest extends App {
   val startTime = System.currentTimeMillis()
-  var testMap = TestSpaceMap(1000,1000)
+  var testMap = TestSpaceMap(1000,1000,true)
   val mapCreatedTime = System.currentTimeMillis()
+  implicit val stateDoubleValued = TestSpaceMap.stateDoubleValued
   val testMapStats = MapStats(testMap)
   println(s"Initial map mean and std dev,: ${testMapStats.cellAverage}, ${testMapStats.cellStdDev}")
   //testMap.render

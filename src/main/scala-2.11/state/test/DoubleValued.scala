@@ -1,5 +1,5 @@
 package state.test
 
-trait DoubleValued {
-  def getDouble: Double
+trait DoubleValued[A] {
+  def apply(a: A): Double
 }

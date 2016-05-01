@@ -1,6 +1,6 @@
 package automata
 
-import topology.Neighbourhood
+import topology.{Cell, Neighbourhood}
 
 
-case class AutomataCell[T,C](state: T, localTopology: Neighbourhood[C])
+case class AutomataCell[T,C <: Cell](state: T, localTopology: Neighbourhood[C])

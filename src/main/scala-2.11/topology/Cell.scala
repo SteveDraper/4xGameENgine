@@ -1,4 +1,6 @@
 package topology
 
 
-trait Cell
+trait Cell {
+  val index: Int
+}

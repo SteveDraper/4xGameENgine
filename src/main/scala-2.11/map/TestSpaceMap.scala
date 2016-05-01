@@ -1,41 +1,49 @@
 package map
 
-import automata.{SimpleAutomataTopologyRep, SimpleAutomataTopology, AutomataCell, AutomataTopology}
-import state.test.TestCellState
-import topology.space.manhatten.{ManhattenCell, ManhattenSpace}
-import topology.{Neighbourhood, Space}
+import automata.{AutomataCell, AutomataTopology}
+import state.test.{DoubleValued, TestCellState}
+import topology.space.CartesianCell
+import topology.space.hex.HexSpace
+import topology.space.manhatten.ManhattenSpace
+import topology.{Cell, Neighbourhood, Space}
 
-import scala.collection.mutable
+import scala.collection.parallel.mutable.ParArray
+import scala.reflect.ClassTag
 
-case class TestSpaceMap[AT[_,_]]
-    (topology: Space[ManhattenCell],
-     at: AT[ManhattenCell,AutomataCell[TestCellState,ManhattenCell]],
+case class TestSpaceMap
+    (topology: Space[CartesianCell],
+     at: AutomataTopology[CartesianCell,AutomataCell[TestCellState,CartesianCell]],
      width: Int,
-     height: Int)
-    (implicit autoTopology: AutomataTopology[AT, ManhattenCell,AutomataCell[TestCellState,ManhattenCell]]) extends SpaceMap[ManhattenCell, TestCellState] {
+     height: Int) extends SpaceMap[CartesianCell, TestCellState] {
 
   def cells = topology.neighbourhoods map(_.center)
-  def cellStateValue(cell: ManhattenCell) = autoTopology.cellMap(at)(cell).state
+  def cellStateValue(cell: CartesianCell) =
+    at.cellMap(cell).state
 
   def run = {
-    def updateCell(mcell: AutomataCell[TestCellState,ManhattenCell]) = {
-      val startState: TestCellState = mcell.state
+    def updateCell(mcell: AutomataCell[TestCellState,CartesianCell]) = {
+      val startStateVal = mcell.state.value
       val neighbours =  mcell.localTopology.neighbours
+      var count = 0;
+      var total = 0.0
+      neighbours.foreach(c => {
+        count = count+1
+        total = total + cellStateValue(c).value - startStateVal
+      })
 
       //  Add average difference of neighbour values from own value / 4
-      val newValue = startState.value + (neighbours.map(cellStateValue(_).value - startState.value).sum)/(4*neighbours.size)
+      val newValue = startStateVal + total/(4*count)
       AutomataCell(TestCellState(newValue), mcell.localTopology)
     }
 
-    //val newAutoTopology = SimpleAutomataTopologyRep(topology.neighbourhoods.map(n => n.center -> updateCell(autoTopology.cellMap(at)(n.center))).toMap)
-    val newAutoTopology = autoTopology.map(at)(updateCell)
+    val newAutoTopology = at.map(updateCell)
     val result = new TestSpaceMap(topology, newAutoTopology, width, height)
     result
   }
 
   def render = {
     println
-    val coordsMap: Map[(Int,Int),Double] = topology.neighbourhoods.map(n => (n.center.x, n.center.y) -> autoTopology.cellMap(at)(n.center).state.value).toMap
+    val coordsMap: Map[(Int,Int),Double] = topology.neighbourhoods.map(n => (n.center.x, n.center.y) -> at.cellMap(n.center).state.value).toMap
     for(y <- 0 to height-1) {
       val colVals = for {
         x <- 0 to width - 1
@@ -48,39 +56,25 @@ case class TestSpaceMap[AT[_,_]]
 }
 
 object TestSpaceMap {
-  def apply(width: Int, height: Int): TestSpaceMap[IndexedAutomataTopologyRep] = {
-    val topology = new ManhattenSpace(width, height, true, false)
-    val autoTopology =
-      IndexedAutomataTopologyRep(
+  implicit val stateDoubleValued = new DoubleValued[TestCellState] {
+    def apply(a: TestCellState): Double = a.value
+  }
+  def apply(width: Int, height: Int, useHex: Boolean): TestSpaceMap = {
+    val topology: Space[CartesianCell] = if (useHex) new HexSpace(width, height, true, false) else new ManhattenSpace(width, height, true, false)
+    val autoTopology: AutomataTopology[CartesianCell,AutomataCell[TestCellState,CartesianCell]] =
+      IndexedAutomataTopologyRep[CartesianCell,AutomataCell[TestCellState,CartesianCell]](
         width,
-        topology.neighbourhoods.map { n: Neighbourhood[ManhattenCell] =>
-          n.center -> AutomataCell(TestCellState.initialize(n.center), n)
-        }.toMap)
-    new TestSpaceMap(topology, autoTopology, width, height)(IndexedAutomataTopologyRep.automataTopology)
+        topology.neighbourhoods.map { n: Neighbourhood[CartesianCell] =>
+          n.center.index -> AutomataCell(TestCellState.initialize(n.center), n)
+        }.toSeq.sortWith(_._1 < _._1).map(_._2).toParArray)
+    new TestSpaceMap(topology, autoTopology, width, height)//IndexedAutomataTopologyRep.automataTopology)
   }
 }
 
-class IndexedAutomataTopologyRep[C,T](width: Int, autoCells: mutable.ArraySeq[T])(implicit cellIndex: C => Int) {
-  private def lookupCell(cell: C) = autoCells(cellIndex(cell))
+final case class IndexedAutomataTopologyRep[C <: Cell,T](width: Int, autoCells:ParArray[T]) extends AutomataTopology[C,T] {
+  val cellMap = (cell:C) => autoCells(cell.index)
 
-  def map[T2](f: T => T2): IndexedAutomataTopologyRep[C,T2] = {
+  def map[T2](f: (T) => T2)(implicit tag: ClassTag[T2]): AutomataTopology[C, T2] = {
     new IndexedAutomataTopologyRep(width, autoCells.map(f))
-  }
-}
-
-object IndexedAutomataTopologyRep {
-  def automataTopology[C,T] = new AutomataTopology[IndexedAutomataTopologyRep,C,T] {
-    def cellMap(r: IndexedAutomataTopologyRep[C, T]) = c => r.lookupCell(c)
-
-    def map[T2](r: IndexedAutomataTopologyRep[C, T])(f: (T) => T2): IndexedAutomataTopologyRep[C, T2] =
-      r.map(f)
-  }
-
-  def apply[T](width: Int, m: Map[ManhattenCell, T]) = {
-    val coordLookup = m.toList.map(k_v => (k_v._1.x, k_v._1.y) -> k_v._2).toMap
-    val array: mutable.ArraySeq[T] = mutable.ArraySeq.tabulate(m.size)(i=>coordLookup((i/width,i%width)))
-    implicit val cellIndexer = (c:ManhattenCell) => c.x%width + c.y*width
-
-    new IndexedAutomataTopologyRep[ManhattenCell,T](width, array)
   }
 }

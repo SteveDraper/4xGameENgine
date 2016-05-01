@@ -1,11 +1,12 @@
 package topology.space.manhatten
 
 import topology.Neighbourhood
+import topology.space.CartesianCell
 
 
-case class DynamicManhattenNeighbourhood(center: ManhattenCell, space: ManhattenSpace) extends Neighbourhood[ManhattenCell] {
-  def neighbours = new Traversable[ManhattenCell] {
-    def foreach[U](f: (ManhattenCell) => U) = {
+case class DynamicManhattenNeighbourhood(center: CartesianCell, space: ManhattenSpace) extends Neighbourhood[CartesianCell] {
+  def neighbours = new Traversable[CartesianCell] {
+    def foreach[U](f: (CartesianCell) => U) = {
       val allowUp = ( center.y > 0 || space.wrapY )
       val allowDown = ( center.y < space.height-1 || space.wrapY )
       val allowLeft = ( center.x > 0 || space.wrapX )
@@ -28,7 +29,7 @@ case class DynamicManhattenNeighbourhood(center: ManhattenCell, space: Manhatten
     }
   }
 
-  def neighboursOld: Traversable[ManhattenCell] = {
+  /*def neighboursOld: Traversable[CartesianCell] = {
     for {
       deltaX <- -1 to 1
       deltaY <- -1 to 1
@@ -36,5 +37,5 @@ case class DynamicManhattenNeighbourhood(center: ManhattenCell, space: Manhatten
       neighbourX = center.x + deltaX if (space.wrapX || (neighbourX >= 0 && neighbourX < space.width))
       neighbourY = center.y + deltaY if (space.wrapY || (neighbourY >= 0 && neighbourY < space.height))
     } yield space.cellAt((neighbourX + space.width)%space.width, (neighbourY + space.height)%space.height)
-  }
+  }*/
 }

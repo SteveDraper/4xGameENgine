@@ -1,13 +1,11 @@
 package state.test
 
-import topology.space.manhatten.ManhattenCell
+import topology.space.CartesianCell
 
-case class TestCellState(value: Double) extends AnyRef with DoubleValued {
-  def getDouble: Double = value
-}
+case class TestCellState(value: Double) extends AnyVal
 
 object TestCellState {
-  def initialize(forCell: ManhattenCell): TestCellState =
+  def initialize(forCell: CartesianCell): TestCellState =
     if ( forCell.x == 5 && forCell.y == 5 ) TestCellState(100.0)
     else TestCellState(0.0)
 }

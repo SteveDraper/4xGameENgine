@@ -18,12 +18,12 @@ object MapStats {
   def sumGeneric[A](l: Traversable[A])(implicit A: Monoid[A]): A =
     l.foldLeft(A.zero)((x, y) => A.append(x, y))
 
-  def apply[C,D <: DoubleValued](m: SpaceMap[C,D]): MapStats = {
+  def apply[C,D](m: SpaceMap[C,D])(implicit getDouble: DoubleValued[D]): MapStats = {
     val sums = sumGeneric(
       for {
         state <- m.cells map m.cellStateValue
       } yield {
-        val value = state.getDouble
+        val value = getDouble(state)
         (value, value*value, 1)
       })
 
