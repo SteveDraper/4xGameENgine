@@ -1,8 +1,10 @@
 package map
 
+import state.test.TestCellState
+
 object MapTest extends App {
   val startTime = System.currentTimeMillis()
-  var testMap = TestSpaceMap(1000,1000,true)
+  var testMap = TestSpaceMap(1000,1000,true)(TestCellState.testCellStateOps)
   val mapCreatedTime = System.currentTimeMillis()
   implicit val stateDoubleValued = TestSpaceMap.stateDoubleValued
   val testMapStats = MapStats(testMap)

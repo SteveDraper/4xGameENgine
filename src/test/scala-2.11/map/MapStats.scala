@@ -1,6 +1,7 @@
 package map
 
 import state.test.DoubleValued
+import topology.Cell
 
 import scalaz.Monoid
 import scalaz.std.AllInstances._
@@ -18,7 +19,7 @@ object MapStats {
   def sumGeneric[A](l: Traversable[A])(implicit A: Monoid[A]): A =
     l.foldLeft(A.zero)((x, y) => A.append(x, y))
 
-  def apply[C,D](m: SpaceMap[C,D])(implicit getDouble: DoubleValued[D]): MapStats = {
+  def apply[C <: Cell, S <: CellState[S]](m: SpaceMap[C,S])(implicit getDouble: DoubleValued[S]): MapStats = {
     val sums = sumGeneric(
       for {
         state <- m.cells map m.cellStateValue
