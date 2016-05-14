@@ -1,5 +1,6 @@
 package map
 
+import state.CellState
 import state.test.DoubleValued
 import topology.Cell
 

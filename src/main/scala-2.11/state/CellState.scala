@@ -1,5 +1,6 @@
-package map
+package state
 
+import map.SpaceMap
 import topology.Cell
 
 

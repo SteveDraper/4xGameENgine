@@ -1,16 +1,18 @@
 package map
 
 import automata.{AutomataCell, AutomataTopology}
+import state.{CellStateOps, CellState}
 import state.test.{DoubleValued, TestCellState}
 import topology.space.CartesianCell
 import topology.space.hex.HexSpace
 import topology.space.manhatten.ManhattenSpace
 import topology.{Cell, Neighbourhood, Space}
+import util.{TaskPArray, DefaultPArray, SimplePArray, PArray}
 
 import scala.collection.parallel.mutable.ParArray
 import scala.reflect.ClassTag
 
-case class TestSpaceMap[A <: CellState[A]]
+case class CartesianSpaceMap[A <: CellState[A]]
     (topology: Space[CartesianCell],
      at: AutomataTopology[CartesianCell,AutomataCell[A,CartesianCell]],
      width: Int,
@@ -26,7 +28,7 @@ case class TestSpaceMap[A <: CellState[A]]
     }
 
     val newAutoTopology = at.map(updateCell)
-    val result = new TestSpaceMap(topology, newAutoTopology, width, height)
+    val result = new CartesianSpaceMap(topology, newAutoTopology, width, height)
     result
   }
 
@@ -44,24 +46,21 @@ case class TestSpaceMap[A <: CellState[A]]
   }
 }
 
-object TestSpaceMap {
-  implicit val stateDoubleValued = new DoubleValued[TestCellState] {
-    def apply(a: TestCellState): Double = a.value
-  }
-  def apply[S <: CellState[S]](width: Int, height: Int, useHex: Boolean)(implicit cellStateOps: CellStateOps[CartesianCell,S]): TestSpaceMap[S] = {
+object CartesianSpaceMap {
+  def apply[S <: CellState[S]](width: Int, height: Int, useHex: Boolean)(implicit cellStateOps: CellStateOps[CartesianCell,S]): CartesianSpaceMap[S] = {
     val topology: Space[CartesianCell] = if (useHex) new HexSpace(width, height, true, false) else new ManhattenSpace(width, height, true, false)
     val autoTopology: AutomataTopology[CartesianCell,AutomataCell[S,CartesianCell]] =
       IndexedAutomataTopologyRep[CartesianCell,AutomataCell[S,CartesianCell]](
         width,
-        topology.neighbourhoods.map { n: Neighbourhood[CartesianCell] =>
-          n.center.index -> AutomataCell(cellStateOps.initialize(n.center), n)
-        }.toSeq.sortWith(_._1 < _._1).map(_._2).toParArray)
-    new TestSpaceMap[S](topology, autoTopology, width, height)
+        DefaultPArray(topology.neighbourhoods.map { n: Neighbourhood[CartesianCell] =>
+            n.center.index -> AutomataCell(cellStateOps.initialize(n.center), n)
+          }.toSeq.sortWith(_._1 < _._1).map(_._2).toArray))
+    new CartesianSpaceMap[S](topology, autoTopology, width, height)
   }
 }
 
-final case class IndexedAutomataTopologyRep[C <: Cell,T](width: Int, autoCells:ParArray[T]) extends AutomataTopology[C,T] {
-  val cellMap = (cell:C) => autoCells(cell.index)
+final case class IndexedAutomataTopologyRep[C <: Cell,T](width: Int, autoCells:PArray[T]) extends AutomataTopology[C,T] {
+  val cellMap = (cell:C) => autoCells.get(cell.index)
 
   def map[T2](f: (T) => T2)(implicit tag: ClassTag[T2]): AutomataTopology[C, T2] = {
     new IndexedAutomataTopologyRep(width, autoCells.map(f))

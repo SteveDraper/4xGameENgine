@@ -1,5 +1,6 @@
 package map
 
+import state.CellState
 import topology.Cell
 
 trait SpaceMap[C <: Cell,S <: CellState[_]] {

@@ -1,12 +1,13 @@
 package map
 
-import state.test.TestCellState
+import state.test.{TestPropertyCellState, TestCellState}
 
 object MapTest extends App {
+  val numProperties = 50
   val startTime = System.currentTimeMillis()
-  var testMap = TestSpaceMap(1000,1000,true)(TestCellState.testCellStateOps)
+  var testMap = CartesianSpaceMap(1000,1000,true)(TestPropertyCellState.testCellStateOps(numProperties))
   val mapCreatedTime = System.currentTimeMillis()
-  implicit val stateDoubleValued = TestSpaceMap.stateDoubleValued
+  implicit val stateDoubleValued = TestPropertyCellState.stateDoubleValued
   val testMapStats = MapStats(testMap)
   println(s"Initial map mean and std dev,: ${testMapStats.cellAverage}, ${testMapStats.cellStdDev}")
   //testMap.render
