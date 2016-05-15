@@ -9,8 +9,8 @@ import topology.space.manhatten.ManhattenSpace
 import topology.{Cell, Neighbourhood, Space}
 import util.{TaskPArray, DefaultPArray, SimplePArray, PArray}
 
-import scala.collection.parallel.mutable.ParArray
 import scala.reflect.ClassTag
+import scalaz.Show
 
 case class CartesianSpaceMap[A <: CellState[A]]
     (topology: Space[CartesianCell],
@@ -32,13 +32,13 @@ case class CartesianSpaceMap[A <: CellState[A]]
     result
   }
 
-  def render = {
+  def render(implicit s: Show[A]) = {
     println
     val coordsMap: Map[(Int,Int),A] = topology.neighbourhoods.map(n => (n.center.x, n.center.y) -> at.cellMap(n.center).state).toMap
     for(y <- 0 to height-1) {
       val colVals = for {
         x <- 0 to width - 1
-      } yield coordsMap.get((x,y)).getOrElse(0.0).toString
+      } yield coordsMap.get((x,y)).map(s.shows).getOrElse("")
 
       println(colVals.mkString(""," ",""))
     }
