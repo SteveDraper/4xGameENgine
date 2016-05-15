@@ -2,24 +2,25 @@ package state.property
 
 import map.SpaceMap
 import state.CellState
-import state.property.PropertyMapState.DoublePropertyUpdaterMap
+import state.property.PropertyMapState.PropertyUpdaterMap
 import topology.Cell
 
 import scala.collection.mutable
+import scala.reflect.ClassTag
 
 final case class PropertyId(value: Int) extends AnyVal
 
-final case class PropertyMapState(properties: Array[DoubleProperty], updaters: DoublePropertyUpdaterMap) extends CellState[PropertyMapState] {
-  def update[C <: Cell](map: SpaceMap[C, PropertyMapState], neighbours: Traversable[C]): PropertyMapState = {
+final case class PropertyMapState[P](properties: Array[P], updaters: PropertyUpdaterMap[P])(implicit tag: ClassTag[P]) extends CellState[PropertyMapState[P]] {
+  def update[C <: Cell](map: SpaceMap[C, PropertyMapState[P]], neighbours: Traversable[C]): PropertyMapState[P] = {
     //  TODO - optimize identity mapping case to minimize GC
     val numProperties = properties.size
-    val builder = new mutable.ArraySeq[DoubleProperty](numProperties)
+    val builder = new Array[P](numProperties)
     var i = 0
     while(i < numProperties) {
       builder(i) = updaters(i).update(properties(i),PropertyId(i),map, neighbours, this)
       i += 1
     }
-    PropertyMapState(builder.toArray, updaters)
+    PropertyMapState(builder, updaters)
   }
 
   override def toString =
@@ -28,5 +29,5 @@ final case class PropertyMapState(properties: Array[DoubleProperty], updaters: D
 }
 
 object PropertyMapState {
-  type DoublePropertyUpdaterMap = Array[DoublePropertyUpdater]
+  type PropertyUpdaterMap[P] = Array[PropertyUpdater[P]]
 }

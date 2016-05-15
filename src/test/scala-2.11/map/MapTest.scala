@@ -3,7 +3,7 @@ package map
 import state.test.{TestPropertyCellState, TestCellState}
 
 object MapTest extends App {
-  val numProperties = 50
+  val numProperties = 10
   val startTime = System.currentTimeMillis()
   var testMap = CartesianSpaceMap(1000,1000,true)(TestPropertyCellState.testCellStateOps(numProperties))
   val mapCreatedTime = System.currentTimeMillis()
