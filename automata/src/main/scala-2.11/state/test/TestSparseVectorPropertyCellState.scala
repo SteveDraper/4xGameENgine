@@ -1,6 +1,6 @@
 package state.test
 
-import state.CellStateOps
+import state.{CellState, CellStateOps}
 import state.property.DoubleProperty.DoubleProperty
 import state.property.DoubleProperty._
 import state.property._
@@ -26,12 +26,12 @@ object TestSparseVectorPropertyCellState {
     if ( forCell.x == 5 && forCell.y == 5 ) stateVal(100.0, numProperties)
     else stateVal(0.0, numProperties)
 
-  implicit val stateDoubleValued = new DoubleValued[TestSparseVectorPropertyCellState] {
+  implicit def stateDoubleValued = new DoubleValued[TestSparseVectorPropertyCellState] {
     def apply(a: TestSparseVectorPropertyCellState): Double =
       a.properties(TEST_PROPERTY_ID1.value).get(ElementId(0)).getOrElse(0.0)
   }
 
-  implicit val stateShow = new Show[TestSparseVectorPropertyCellState] {
+  implicit def stateShow = new Show[TestSparseVectorPropertyCellState] {
     override def shows(s: TestSparseVectorPropertyCellState) = {
       s.properties(TEST_PROPERTY_ID1.value).get(ElementId(1)).getOrElse(0.0).toString
     }

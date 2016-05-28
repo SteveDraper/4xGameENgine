@@ -12,29 +12,29 @@ import util.{TaskPArray, DefaultPArray, SimplePArray, PArray}
 import scala.reflect.ClassTag
 import scalaz.Show
 
-case class CartesianSpaceMap[A <: CellState[A]]
+case class CartesianSpaceMap[S]
     (topology: Space[CartesianCell],
-     at: AutomataTopology[CartesianCell,AutomataCell[A,CartesianCell]],
+     at: AutomataTopology[CartesianCell,AutomataCell[CellState[S],CartesianCell]],
      width: Int,
-     height: Int) extends SpaceMap[CartesianCell, A] {
+     height: Int) extends SpaceMap[CartesianCell, S] {
 
   def cells = topology.neighbourhoods map(_.center)
   def cellStateValue(cell: CartesianCell) =
-    at.cellMap(cell).state
+    at.cellMap(cell).state.get
 
   def run = {
-    def updateCell(mcell: AutomataCell[A,CartesianCell]) = {
-      AutomataCell(mcell.state.update(this, mcell.localTopology.neighbours), mcell.localTopology)
+    def updateCell(mcell: AutomataCell[CellState[S],CartesianCell]) = {
+      AutomataCell(mcell.state.update(cellStateValue, identity[S], mcell.localTopology.neighbours), mcell.localTopology)
     }
 
     val newAutoTopology = at.map(updateCell)
-    val result = new CartesianSpaceMap(topology, newAutoTopology, width, height)
+    val result = new CartesianSpaceMap[S](topology, newAutoTopology, width, height)
     result
   }
 
-  def render(implicit s: Show[A]) = {
+  def render(implicit s: Show[S]) = {
     println
-    val coordsMap: Map[(Int,Int),A] = topology.neighbourhoods.map(n => (n.center.x, n.center.y) -> at.cellMap(n.center).state).toMap
+    val coordsMap: Map[(Int,Int),S] = topology.neighbourhoods.map(n => (n.center.x, n.center.y) -> at.cellMap(n.center).state.get).toMap
     for(y <- 0 to height-1) {
       val colVals = for {
         x <- 0 to width - 1
@@ -47,10 +47,13 @@ case class CartesianSpaceMap[A <: CellState[A]]
 }
 
 object CartesianSpaceMap {
-  def apply[S <: CellState[S]](width: Int, height: Int, useHex: Boolean)(implicit cellStateOps: CellStateOps[CartesianCell,S]): CartesianSpaceMap[S] = {
+  def apply[S](width: Int,
+                height: Int,
+                useHex: Boolean)
+               (implicit cellStateOps: CellStateOps[CartesianCell,S]): CartesianSpaceMap[S] = {
     val topology: Space[CartesianCell] = if (useHex) new HexSpace(width, height, true, false) else new ManhattenSpace(width, height, true, false)
-    val autoTopology: AutomataTopology[CartesianCell,AutomataCell[S,CartesianCell]] =
-      IndexedAutomataTopologyRep[CartesianCell,AutomataCell[S,CartesianCell]](
+    val autoTopology: AutomataTopology[CartesianCell,AutomataCell[CellState[S],CartesianCell]] =
+      IndexedAutomataTopologyRep[CartesianCell,AutomataCell[CellState[S],CartesianCell]](
         width,
         DefaultPArray(topology.neighbourhoods.map { n: Neighbourhood[CartesianCell] =>
             n.center.index -> AutomataCell(cellStateOps.initialize(n.center), n)

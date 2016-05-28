@@ -11,13 +11,14 @@ import scala.reflect.ClassTag
 final case class PropertyId(value: Int) extends AnyVal
 
 final case class PropertyMapState[P](properties: Array[P], updaters: PropertyUpdaterMap[P])(implicit tag: ClassTag[P]) extends CellState[PropertyMapState[P]] {
-  def update[C <: Cell](map: SpaceMap[C, PropertyMapState[P]], neighbours: Traversable[C]): PropertyMapState[P] = {
+  def get = this
+  def update[C <: Cell,R](cellState: C => R, selfLens: R => PropertyMapState[P], neighbours: Traversable[C]): PropertyMapState[P] = {
     //  TODO - optimize identity mapping case to minimize GC
     val numProperties = properties.size
     val builder = new Array[P](numProperties)
     var i = 0
     while(i < numProperties) {
-      builder(i) = updaters(i).update(properties(i),PropertyId(i),map, neighbours, this)
+      builder(i) = updaters(i).update(properties(i),PropertyId(i),cellState,selfLens, neighbours)
       i += 1
     }
     PropertyMapState(builder, updaters)

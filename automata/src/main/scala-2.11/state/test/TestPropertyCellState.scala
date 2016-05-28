@@ -2,7 +2,7 @@ package state.test
 
 import state.property.PropertyMapState.PropertyUpdaterMap
 import state.property._
-import state.{CellStateOps, CellState}
+import state.{CellState, CellStateOps}
 import topology.space.CartesianCell
 import TestPropertyUpdater._
 import DoubleProperty._
@@ -23,7 +23,7 @@ object TestPropertyCellState {
     if ( forCell.x == 5 && forCell.y == 5 ) stateVal(100.0, numProperties)
     else stateVal(0.0, numProperties)
 
-  implicit val stateDoubleValued = new DoubleValued[TestPropertyCellState] {
+  implicit def stateDoubleValued = new DoubleValued[TestPropertyCellState] {
     def apply(a: TestPropertyCellState): Double = a.properties(TEST_PROPERTY_ID1.value)
   }
 

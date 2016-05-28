@@ -1,4 +1,4 @@
-name := "ascent"
+name := "server"
 
 version := "1.0"
 
@@ -10,12 +10,11 @@ resolvers += Resolver.sonatypeRepo("releases")
 addCompilerPlugin("org.spire-math" %% "kind-projector" % "0.7.1")
 
 scalaVersion := "2.11.8"
-   
-lazy val root = (project in file(".")).aggregate(automata,server)
 
-lazy val automata =
-  project
+lazy val http4sVersion = "0.13.2a"
 
-lazy val server =
-  project
-    .dependsOn(automata)
+libraryDependencies ++= Seq(
+  "org.http4s" %% "http4s-dsl" % http4sVersion,
+  "org.http4s" %% "http4s-blaze-server" % http4sVersion,
+  "org.http4s" %% "http4s-blaze-client" % http4sVersion
+)

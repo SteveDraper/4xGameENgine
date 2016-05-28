@@ -1,6 +1,7 @@
 package state.test
 
-import state.property.{ElementId, BasicSparseVectorProperty, SparseVectorPropertyUpdater}
+import state.CellState
+import state.property.{BasicSparseVectorProperty, ElementId, SparseVectorPropertyUpdater}
 
 
 object TestSparseVectorPropertyUpdater extends SparseVectorPropertyUpdater[Double, BasicSparseVectorProperty[Double]] {

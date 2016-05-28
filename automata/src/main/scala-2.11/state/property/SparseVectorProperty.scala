@@ -1,6 +1,7 @@
 package state.property
 
 import map.SpaceMap
+import state.CellState
 import topology.Cell
 
 import scala.collection.mutable
@@ -22,12 +23,16 @@ abstract class SparseVectorPropertyUpdater[T,S <: SparseVectorProperty[T]] exten
   def elementUpdate(initialValue: T, neighbourValues: Traversable[T]): T
   def zero: T
 
-  def update[C <: Cell](initialValue: S, id: PropertyId, map: SpaceMap[C, PropertyMapState[S]], neighbours: Traversable[C], parent: PropertyMapState[S]): S = {
+  def update[C <: Cell,R](initialValue: S,
+                        id: PropertyId,
+                        cellState: C => R,
+                        parentLens: R => PropertyMapState[S],
+                        neighbours: Traversable[C]): S = {
     val builder = new mutable.ArrayBuffer[(ElementId,T)]
     def addToBuilder(el: (ElementId,T)) = builder += el
 
     neighbours.foreach(c => {
-      map.cellStateValue(c).properties(id.value).foreach(addToBuilder)
+      parentLens(cellState(c)).properties(id.value).foreach(addToBuilder)
     })
 
     val builderSize = builder.size
