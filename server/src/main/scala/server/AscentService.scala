@@ -6,7 +6,10 @@ import org.http4s.dsl._
 
 object AscentService {
   val service = HttpService {
-    case GET -> Root / "hello" / name =>
-      Ok(s"Hello, $name.")
+    case GET -> Root / "resources" / name =>
+      StaticResources.get(name)
+
+    case req@(GET -> Root / "games" / gameId / "maps" / mapId) =>
+      Maps.getMapData(req)
   }
 }
