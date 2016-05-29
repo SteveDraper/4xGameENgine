@@ -7,10 +7,10 @@ object MapTest extends App {
   val numProperties = 10
   val startTime = System.currentTimeMillis()
   var testMap =
-    CartesianSpaceMap(1000,1000,true)(TestCompositePropertyCellState.testCellStateOps[CartesianCell](numProperties))
+    CartesianSpaceMap(1000,1000,true)(TestCellState.testCellStateOps[CartesianCell])
   val mapCreatedTime = System.currentTimeMillis()
-  implicit val stateDoubleValued = TestCompositePropertyCellState.stateDoubleValued
-  implicit val stateShow = TestCompositePropertyCellState.stateShow
+  implicit val stateDoubleValued = TestCellState.stateDoubleValued
+  implicit val stateShow = TestCellState.stateShow
   val testMapStats = MapStats(testMap)
   println(s"Initial map mean and std dev,: ${testMapStats.cellAverage}, ${testMapStats.cellStdDev}")
   //testMap.render

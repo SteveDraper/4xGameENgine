@@ -1,7 +1,8 @@
 package server
 
+import model.{GameId, MapId}
 
-final case class GameId(value: String) extends AnyVal
+
 final case class Game(id: GameId, maps: Map[MapId, GameMap])
 
 object Game {

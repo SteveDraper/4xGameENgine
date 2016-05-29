@@ -1,9 +1,10 @@
 package server
 
 import map.CartesianSpaceMap
+import model.MapId
 import state.test.TestCellState
 
-final case class MapId(value: String) extends AnyVal
+
 final case class GameMap(id: MapId, mapData: CartesianSpaceMap[Double])
 
 object GameMap {

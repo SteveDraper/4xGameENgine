@@ -1,13 +1,14 @@
 package map
 
 import automata.{AutomataCell, AutomataTopology}
-import state.{CellStateOps, CellState}
+import model.{MapTopology, MapTopologyProvider}
+import state.{CellState, CellStateOps}
 import state.test.{DoubleValued, TestCellState}
 import topology.space.CartesianCell
 import topology.space.hex.HexSpace
 import topology.space.manhatten.ManhattenSpace
 import topology.{Cell, Neighbourhood, Space}
-import util.{TaskPArray, DefaultPArray, SimplePArray, PArray}
+import util.{DefaultPArray, PArray, SimplePArray, TaskPArray}
 
 import scala.reflect.ClassTag
 import scalaz.Show
@@ -16,7 +17,7 @@ case class CartesianSpaceMap[S]
     (topology: Space[CartesianCell],
      at: AutomataTopology[CartesianCell,AutomataCell[CellState[S],CartesianCell]],
      width: Int,
-     height: Int) extends SpaceMap[CartesianCell, S] {
+     height: Int) extends SpaceMap[CartesianCell, S] with MapTopologyProvider {
 
   def cells = topology.neighbourhoods map(_.center)
   def cellStateValue(cell: CartesianCell) =
@@ -44,6 +45,9 @@ case class CartesianSpaceMap[S]
     }
     println
   }
+
+  def getMapTopology: MapTopology =
+    topology.getMapTopology
 }
 
 object CartesianSpaceMap {

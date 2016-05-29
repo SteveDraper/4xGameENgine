@@ -1,5 +1,7 @@
 package topology
 
-trait Space[T] {
+import model.MapTopologyProvider
+
+trait Space[T] extends MapTopologyProvider {
   def neighbourhoods: Traversable[Neighbourhood[T]]
 }

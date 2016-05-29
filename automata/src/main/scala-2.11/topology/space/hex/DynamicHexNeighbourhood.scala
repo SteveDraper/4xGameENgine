@@ -33,16 +33,28 @@ case class CentralDynamicHexNeighbourhood(center: CartesianCell, space: HexSpace
     def foreach[U](f: (CartesianCell) => U) = {
       val upY = center.y-1
       val downY = center.y+1
+      val xEven = center.x%2 == 0
 
-      f(space.cellAt(center.x-1, upY))
-      f(space.cellAt(center.x,upY))
-      f(space.cellAt(center.x+1, upY))
-      f(space.cellAt(center.x-1, downY))
-      f(space.cellAt(center.x,downY))
-      f(space.cellAt(center.x+1, downY))
+      if ( xEven ) {
+        f(space.cellAt(center.x-1, center.y))
+        f(space.cellAt(center.x,upY))
+        f(space.cellAt(center.x+1, center.y))
+        f(space.cellAt(center.x-1, downY))
+        f(space.cellAt(center.x,downY))
+        f(space.cellAt(center.x+1, downY))
+      }
+      else {
+        f(space.cellAt(center.x - 1, upY))
+        f(space.cellAt(center.x, upY))
+        f(space.cellAt(center.x + 1, upY))
+        f(space.cellAt(center.x - 1,center.y))
+        f(space.cellAt(center.x, downY))
+        f(space.cellAt(center.x + 1, center.y))
+      }
     }
   }
 }
+
 object DynamicHexNeighbourhood {
   def apply(center: CartesianCell, space: HexSpace) = {
     val allowUp = ( center.y > 0 )
