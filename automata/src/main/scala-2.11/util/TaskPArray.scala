@@ -22,7 +22,7 @@ class TaskPArray[A] private (a: mutable.ArraySeq[A]) extends PArray[A] {
       .map {n => ((n-1)*subLen, (n == numSubTasks) ? (a.size-1) | n*subLen-1)}
       .map(r => Task.fork(mapSubArray(newArray,r)))
 
-    Task.gatherUnordered(subTasks).unsafePerformSync
+    Task.gatherUnordered(subTasks).run
 
     new TaskPArray(newArray)
   }
