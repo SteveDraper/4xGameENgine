@@ -5,8 +5,8 @@
 require.config({
 	// baseUrl is Resources
 	paths : {
-		jquery : 'lib/jquery',
-		underscore : 'lib/underscore'
+		jquery : '/resources/lib/jquery',
+		underscore : '/resources/lib/underscore'
 	}
 });
 
