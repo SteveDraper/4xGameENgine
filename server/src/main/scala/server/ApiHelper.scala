@@ -28,6 +28,8 @@ object ApiHelper {
 
   def notFound(messages: NonEmptyList[String]): Failure = failure(messages, Status.NotFound)
   def notFound(message: String): Failure = notFound(NonEmptyList(message))
+  def internalServerError(messages: NonEmptyList[String]): Failure = failure(messages, Status.InternalServerError)
+  def internalServerError(message: String): Failure = internalServerError(NonEmptyList(message))
 
   def wrap[A](oneOf: Task[Response] \/ A): TaskResponseOr[A] = EitherT.eitherT { oneOf.point[Task]}
   def wrap[A](t: Task[A]): TaskResponseOr[A] =  t.liftM[MonadResponseOr]
@@ -45,15 +47,21 @@ object ApiHelper {
         a => Ok(a)
       ))
 
+  def joinResponse(result: TaskFailureOr[Response]): Task[Response] =
+    result
+      .run
+      .flatMap(_.fold(failureToResponseTask,Task.now))
+
   def joinRaw(result: TaskFailureOr[String]): Task[Response] =
     result
       .run
       .flatMap(_.fold(
-        f => Response(f.status).withBody(makeMessageReply(f.messages)),
-        a => {
-          Ok(a)
-        }
+        failureToResponseTask,
+        Ok(_)
       ))
+
+  def failureToResponseTask(f: Failure) =
+    Response(f.status).withBody(makeMessageReply(f.messages))
 
   def makeMessageReply(messages: NonEmptyList[String]) = Map(MESSAGES -> messages.list.toList)
 }

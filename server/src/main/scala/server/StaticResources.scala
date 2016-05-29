@@ -1,5 +1,7 @@
 package server
 
+import java.io.File
+
 import org.http4s.Response
 import server.ApiHelper._
 
@@ -12,39 +14,41 @@ import org.http4s.StaticFile
 import org.http4s.Request
 import org.http4s.dsl._
 
+import scalaz.syntax.std.boolean._
+
 trait StaticResourceProvider {
-  def get(name: String, req: Request): Task[Response]
+  val resourcePrefix = "/resources/"
+
+  def get(req: Request): Task[Response]
+
+  def validateRequest(req: Request): TaskFailureOr[String] = {
+    req.pathInfo.startsWith(resourcePrefix) ?
+      successM(req.pathInfo.substring(resourcePrefix.length)) |
+      wrapM(internalServerError(s"Resource path '${req.pathInfo}' invalid").left)
+  }
 }
 
 object EmbeddedStaticResources extends StaticResourceProvider {
-  val resourcePrefix = "/resources/"
 
-  def get(path: String, req: Request): Task[Response] =  {
-    if (path.startsWith(resourcePrefix)) {
-      val mappedPath = s"/public/${path.substring(resourcePrefix.length)}"
-      StaticFile.fromResource(mappedPath, Some(req))
-        .map(Task.now)
-        .getOrElse(NotFound(s"Resource '$path' not found"))
-    }
-    else InternalServerError(s"Resource path '$path' invalid")
-  }
+  def get(req: Request): Task[Response] =  {
+    val result = for {
+      virtualPath <- validateRequest(req)
+      maybeResponse = StaticFile.fromResource(s"/public/$virtualPath", Some(req))
+      response <- wrapM(maybeResponse \/> notFound(s"Resource '${req.pathInfo}' not found"))
+    } yield response
 
-  private def getResourceLines(name: String): TaskFailureOr[String] = {
-    for {
-      url <- wrapM(Try(getClass.getResource(s"/public/$name")).toOption.flatMap(Option(_)) \/> notFound(s"Resource '$name' not found"))
-      source <- wrapM(Source.fromURL(url).right)
-    } yield source.getLines mkString "\n"
+    joinResponse(result)
   }
 }
 
 final case class FilesystemStaticResources(root: String) extends StaticResourceProvider {
-  def get(name: String, req: Request): Task[Response] =  {
-    joinRaw(getResourceLines(name))
-  }
+  def get(req: Request): Task[Response] =  {
+    val result = for {
+      virtualPath <- validateRequest(req)
+      maybeResponse = StaticFile.fromFile(new File(s"$root/$virtualPath"), Some(req))
+      response <- wrapM(maybeResponse \/> notFound(s"Resource '${req.pathInfo}' not found"))
+    } yield response
 
-  private def getResourceLines(name: String): TaskFailureOr[String] = {
-    for {
-      source <- wrapM(Try(Source.fromFile(s"$root/$name")).toOption.flatMap(Option(_)) \/> notFound(s"Resource '$name' not found"))
-    } yield source.getLines mkString "\n"
+    joinResponse(result)
   }
 }
