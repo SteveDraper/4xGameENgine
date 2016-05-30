@@ -1,5 +1,7 @@
 package server
 
+import model.GameId
+import model.map.MapId
 import org.http4s.dsl._
 import org.http4s.server.HttpService
 
@@ -10,6 +12,6 @@ object AscentService {
       resourceProvider.get(req)
 
     case req@(GET -> Root / "games" / gameId / "maps" / mapId) =>
-      Maps.getMapData(req)
+      Maps.getMapData(req, GameId(gameId), MapId(mapId))
   }
 }

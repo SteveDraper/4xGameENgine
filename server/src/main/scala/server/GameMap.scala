@@ -1,9 +1,11 @@
 package server
 
 import map.CartesianSpaceMap
-import model.MapId
+import model.map.MapId
 import state.test.TestCellState
+import ApiHelper._
 
+import scalaz.syntax.either._
 
 final case class GameMap(id: MapId, mapData: CartesianSpaceMap[Double])
 
@@ -13,4 +15,8 @@ object GameMap {
 
   def buildTestMap =
     GameMap(testMapId, testMap)
+
+  def getGame(id: MapId) =
+    if ( id == testMapId ) successM(testMap)
+    else wrapM(notFound(s"Map '$id' not found").left)
 }

@@ -1,6 +1,6 @@
 package topology.space.hex
 
-import model.{Hex, MapTopology, MapTopologyProvider, TopologyFamily}
+import model.map.{Hex, MapTopology, MapTopologyProvider}
 import topology.space.CartesianCell
 import topology.{CartesianCoordinates, CartesianProjection, Neighbourhood, Space}
 

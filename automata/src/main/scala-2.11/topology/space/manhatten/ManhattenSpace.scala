@@ -1,6 +1,6 @@
 package topology.space.manhatten
 
-import model.{MapTopology, RectWithDiagonals}
+import model.map.{MapTopology, RectWithDiagonals}
 import topology.space.CartesianCell
 import topology.{CartesianCoordinates, CartesianProjection, Neighbourhood, Space}
 

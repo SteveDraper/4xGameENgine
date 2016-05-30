@@ -1,7 +1,7 @@
-package model
+package model.map
 
+import argonaut.Argonaut._
 import argonaut._
-import Argonaut._
 
 sealed trait TopologyFamily {
   val encodingString: String
