@@ -1,11 +1,11 @@
-define([ 'react', 'gameboard', 'purerendermixin'
-    ], function(React, GameBoard, PureRenderMixin) {
+define([ 'react', 'jsx!gameboard'
+    ], function(React, GameBoard) {
 	"use strict";
 
     var App = function() {
         return React.createClass({
             displayName: 'app',
-            mixins: [PureRenderMixin],
+            mixins: [React.addons.PureRenderMixin],
             render: function() {
                 return (
                     <GameBoard />
@@ -15,4 +15,4 @@ define([ 'react', 'gameboard', 'purerendermixin'
     }
 
     return App;
-);
+});

@@ -1,11 +1,11 @@
-define([ 'react', 'surface', 'hexgrid', 'purerendermixin', 'displayhelper'
-    ], function(React, Surface, HexGrid, PureRenderMixin, displayHelper) {
+define([ 'react', 'reactart', 'jsx!hexgrid', 'displayhelper'
+    ], function(React, ReactArt, HexGrid, displayHelper) {
 	"use strict";
 
 	var GameBoard = function() {
         return React.createClass({
             displayName: 'GameBoard',
-            mixins: [PureRenderMixin],
+            mixins: [React.addons.PureRenderMixin],
             getInitialState: function() {
                 return {
                     displayDimensions: displayHelper.getDimensions()
@@ -27,9 +27,9 @@ define([ 'react', 'surface', 'hexgrid', 'purerendermixin', 'displayhelper'
                 var height = this.state.displayDimensions.height;
 
                 return (
-                    <Surface width={ width } height={ height }>
+                    <ReactArt.Surface width={ width } height={ height }>
                         <HexGrid width={ width } height={ height } hexCountHorizontal='25' hexCountVertical='13' />
-                    </Surface>
+                    </ReactArt.Surface>
                 );
             }
         });

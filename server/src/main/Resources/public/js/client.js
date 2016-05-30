@@ -3,20 +3,20 @@
  * Wrapper that sets up require.config and calls clientMain.
  */
 require.config({
-	// baseUrl is Resources
+	baseUrl: '/resources',
 	paths : {
-		jquery : '/resources/lib/jquery',
-		underscore : '/resources/lib/underscore',
-		react: '/resources/lib/react-with-addons',
-		reactdom: '/resources/lib/react-dom',
-		reactart: '/resources/lib/react-art',
-		JSXTransformer: '/resources/lib/jsxtransformer',
-		jsx: '/resources/lib/require-jsx',
-		text: '/resources/lib/require-text',
-		hexgrid: 'jsx!/js/hexgrid',
-		hextile: 'jsx!/js/hextile',
-		gameboard: 'jsx!/js/gameboard',
-		displayhelper: '/js/displayhelper'
+		underscore : 'lib/underscore',
+		react: 'lib/react-with-addons',
+		reactdom: 'lib/react-dom',
+		reactart: 'lib/react-art',
+		jquery: 'lib/jquery',
+		JSXTransformer: 'lib/jsxtransformer',
+		jsx: 'lib/require-jsx',
+		text: 'lib/require-text',
+		hexgrid: 'js/hexgrid',
+		hextile: 'js/hextile',
+		gameboard: 'js/gameboard',
+		displayhelper: 'js/displayhelper'
 
     },
     jsx: {
@@ -24,7 +24,8 @@ require.config({
     }
 });
 
-define(['react', 'js/app.jsx', 'jquery'], function(React, App, $){
+//define(['react', 'jsx!./js/app', 'jquery'], function(React, App, $){
+define(['jquery', 'react', 'jsx!js/app'], function($, React, App){
 
     var AppElement = React.createElement(App);
     React.render(AppElement, document.body);

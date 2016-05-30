@@ -1,8 +1,8 @@
-define([ 'underscore', 'react', 'group', 'hextile', 'purerendermixin'
-    ], function(_, React, Group, HexTile, PureRenderMixin) {
+define([ 'underscore', 'react', 'reactart', 'jsx!hextile'
+    ], function(_, React, ReactArt, HexTile) {
 	"use strict";
 
-	var HexGrid = function(_, React, Group, HexTile, PureRenderMixin) {
+	var HexGrid = function() {
 
        var SIZE_TO_PACKED_WIDTH = 1.7320508075688772;
        var SIZE_TO_PACKED_HEIGHT = 1.5;
@@ -87,7 +87,7 @@ define([ 'underscore', 'react', 'group', 'hextile', 'purerendermixin'
 
        return React.createClass({
            displayName: 'HexGrid',
-           mixins: [PureRenderMixin],
+           mixins: [React.addons.PureRenderMixin],
            render: function() {
                var widthPixels = this.props.width;
                var heightPixels = this.props.height;
@@ -110,16 +110,16 @@ define([ 'underscore', 'react', 'group', 'hextile', 'purerendermixin'
                    });
 
                    return (
-                       <Group key={ 'row_' + index }>
+                       <ReactArt.Group key={ 'row_' + index }>
                            { rowElements }
-                       </Group>
+                       </ReactArt.Group>
                    );
                });
 
                return (
-                   <Group>
+                   <ReactArt.Group>
                        { hexGrid }
-                   </Group>
+                   </ReactArt.Group>
                );
            }
        });

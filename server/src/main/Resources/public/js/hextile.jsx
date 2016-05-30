@@ -1,11 +1,11 @@
-define([ 'react', 'shape', 'path', 'purerendermixin'
-    ], function(React, Shape, Path, PureRenderMixin) {
+define([ 'react', 'reactart'
+    ], function(React, ReactArt) {
 	"use strict";
 
     var HexTile = function() {
 
         function makeHexPath(size, centre) {
-            var path = new Path();
+            var path = new ReactArt.Path();
             var point = 0;
             var angle = null;
             var x = null;
@@ -31,7 +31,7 @@ define([ 'react', 'shape', 'path', 'purerendermixin'
 
         return  React.createClass({
             displayName: 'HexTile',
-            mixins: [PureRenderMixin],
+            mixins: [React.addons.PureRenderMixin],
             getInitialState: function() {
                 return {
                     isSelected: false
@@ -49,7 +49,7 @@ define([ 'react', 'shape', 'path', 'purerendermixin'
                 var path = makeHexPath(this.props.size, this.props.centre);
 
                 return (
-                    <Shape d={path} fill={color} opacity='0.5' onClick={ this.handleClick }></Shape>
+                    <ReactArt.Shape d={path} fill={color} opacity='0.5' onClick={ this.handleClick }></ReactArt.Shape>
                 );
             }
         });
