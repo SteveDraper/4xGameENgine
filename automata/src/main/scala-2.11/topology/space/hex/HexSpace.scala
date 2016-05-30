@@ -21,6 +21,12 @@ case class HexSpace(width: Int, height: Int, wrapX: Boolean, wrapY: Boolean)
       c.y.toDouble*HexSpace.root3 + yAdjust)
   }
 
+  def projectionWidth =
+    (3*width).toDouble/2.0
+
+  def projectionHeight =
+    HexSpace.root3*height
+
   def getMapTopology: MapTopology =
     MapTopology(Hex, wrapX, wrapY, HexSpace.root3)
 }

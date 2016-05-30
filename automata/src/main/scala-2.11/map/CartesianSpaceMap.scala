@@ -46,6 +46,9 @@ case class CartesianSpaceMap[S]
     println
   }
 
+  def projectionWidth = topology.projectionWidth
+  def projectionHeight = topology.projectionHeight
+
   def getMapTopology: MapTopology =
     topology.getMapTopology
 }

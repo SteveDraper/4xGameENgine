@@ -5,7 +5,6 @@ import argonaut.CodecJson
 
 final case class Rectangle(topLeft: Point, bottomRight: Point) {
   def contains(p: Point) = {
-    //  TODO - handle wrap
     (p.x >= topLeft.x &&
      p.x <= bottomRight.x &&
      p.y >= topLeft.y &&

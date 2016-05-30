@@ -41,5 +41,7 @@ object MapTopology {
 }
 
 trait MapTopologyProvider {
+  def projectionWidth: Double
+  def projectionHeight: Double
   def getMapTopology: MapTopology
 }

@@ -13,6 +13,12 @@ case class ManhattenSpace(width: Int, height: Int, wrapX: Boolean, wrapY: Boolea
 
   def neighbourhoods: Traversable[Neighbourhood[CartesianCell]] = cells.map(c => DynamicManhattenNeighbourhood(c,this))
 
+  def projectionWidth =
+    width.toDouble
+
+  def projectionHeight =
+    height.toDouble
+
   def getMapTopology: MapTopology =
     MapTopology(RectWithDiagonals, wrapX, wrapY, 1.0)
 

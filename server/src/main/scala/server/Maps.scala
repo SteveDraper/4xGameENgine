@@ -8,6 +8,7 @@ import topology.space.CartesianCell
 
 import scalaz.concurrent.Task
 import scalaz.syntax.either._
+import scalaz.syntax.std.boolean._
 
 
 object Maps extends QueryParamHelper {
@@ -20,8 +21,6 @@ object Maps extends QueryParamHelper {
 
   def getMapData(req: Request, gameId: GameId, mapId: MapId): Task[Response] = {
     //  TODO - validate API key and infer identity
-    //  TODO - find game
-    //  TODO - find specific map
     join {
       for {
         maybeBounds <- validateBounds(req)
@@ -45,13 +44,72 @@ object Maps extends QueryParamHelper {
           if (maybeTopY.isDefined || maybeBottomY.isDefined || maybeLeftX.isDefined || maybeRightX.isDefined)
             wrapM(badRequest(s"If bounds are specified they must be complete and specify all 4 bounding rectangle bounds").left[Option[Rectangle]])
           else successM(None:Option[Rectangle]))(r => successM(Some(r)))
+      _ <- wrapM(bounds.fold(true)(r =>
+        (r.topLeft.x < r.bottomRight.x) && (r.topLeft.y < r.bottomRight.y)) either
+          () or
+          badRequest(s"Bounds top left must be above and left of the bottom right"))
     } yield bounds
   }
 
+  private def normalizeDimension(from: Double, max: Double) = {
+    if ( from < 0 ) from + ((-from/max).toInt+1)*max
+    else if (from > max) from - (from/max).toInt*max
+    else from
+  }
+
+  private def normalizeRectDimension(r: Rectangle,
+                                     max: Double,
+                                     getter: Rectangle=>(Double,Double),
+                                     setter:(Rectangle,Double,Double)=>Rectangle): List[Rectangle] = {
+    def normalizeRange(range: (Double,Double)) = {
+      if (Math.abs(range._1 - range._2) > max) {
+        (range._1, range._1 + max)
+      }
+      else range
+    }
+
+    val raw = normalizeRange(getter(r))
+    val normalized = (normalizeDimension(raw._1,max), normalizeDimension(raw._2,max))
+
+    if (normalized._1 < normalized._2) List(setter(r,normalized._1,normalized._2))
+    else
+      List(
+        setter(r,0.0,normalized._2),
+        setter(r,normalized._1, max)
+      )
+  }
+
   private def buildMapResponse(maybeBounds: Option[Rectangle], map: GameMap) = {
-    def boundsChecker(bounds: Rectangle)(cell: CartesianCell) = {
+    val topology =  map.mapData.getMapTopology
+
+    def boundsChecker(bounds: List[Rectangle])(cell: CartesianCell) = {
       val cellLocation = map.mapData.topology.cellCoordinates(cell).toPoint
-      bounds.contains(cellLocation)
+      bounds.exists(_.contains(cellLocation))
+    }
+
+    def makeBoundsList(rawBounds: Rectangle) = {
+      def xGetter(r: Rectangle) = (r.topLeft.x,r.bottomRight.x)
+      def xSetter(r: Rectangle, left: Double, right: Double) =
+        Rectangle(Point(left,r.topLeft.y), Point(right,r.bottomRight.y))
+      def yGetter(r: Rectangle) = (r.topLeft.y,r.bottomRight.y)
+      def ySetter(r: Rectangle, top: Double, bottom: Double) =
+        Rectangle(Point(r.topLeft.x,top), Point(r.bottomRight.x,bottom))
+
+      val xAdjusted =
+        normalizeRectDimension(
+          rawBounds,
+          map.mapData.projectionWidth,
+          xGetter,
+          xSetter)
+      val result = xAdjusted.map(r =>
+        normalizeRectDimension(
+          r,
+          map.mapData.projectionHeight,
+          yGetter,
+          ySetter
+        )).flatten
+
+      result
     }
 
     def toCellInfo(cell: CartesianCell) = {
@@ -64,9 +122,9 @@ object Maps extends QueryParamHelper {
     val filteredCells =
       maybeBounds.fold(
         map.mapData.cells)(bounds =>
-        map.mapData.cells.filter(boundsChecker(bounds)))
+        map.mapData.cells.filter(boundsChecker(makeBoundsList(bounds))))
     MapResponse(
-      map.mapData.getMapTopology,
+      topology,
       Nil,
       filteredCells
         .map(toCellInfo)
