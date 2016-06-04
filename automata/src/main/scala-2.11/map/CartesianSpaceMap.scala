@@ -33,6 +33,16 @@ case class CartesianSpaceMap[S]
     result
   }
 
+  def buildFrom(f: (CartesianCell) => CellState[S]): CartesianSpaceMap[S] = {
+    def updateCell(mcell: AutomataCell[CellState[S],CartesianCell]) = {
+      AutomataCell(f(mcell.localTopology.center), mcell.localTopology)
+    }
+
+    val newAutoTopology = at.map(updateCell)
+    val result = new CartesianSpaceMap[S](topology, newAutoTopology, width, height)
+    result
+  }
+
   def render(implicit s: Show[S]) = {
     println
     val coordsMap: Map[(Int,Int),S] = topology.neighbourhoods.map(n => (n.center.x, n.center.y) -> at.cellMap(n.center).state.get).toMap

@@ -4,6 +4,9 @@ import org.http4s.{Request, Response}
 import ApiHelper._
 import model.GameId
 import model.map._
+import model.property.{ScalarProperty, VectorProperty, VectorPropertyElement}
+import server.properties.GamePropertyRegistry
+import state.property.{BasicSparseVectorProperty, ElementId, PropertyId}
 import topology.space.CartesianCell
 
 import scalaz.concurrent.Task
@@ -112,11 +115,27 @@ object Maps extends QueryParamHelper {
       result
     }
 
+    def toScalarProperty(el: (PropertyId, Double)): ScalarProperty = {
+      val property = GamePropertyRegistry.scalarProperties.getOrElse(el._1, throw new RuntimeException(s"Unknown scalar property ${el._1.value} encountered"))
+      ScalarProperty(property.name, el._2)
+    }
+
+    def toVectorElement(el: (ElementId, Double)): VectorPropertyElement = {
+      VectorPropertyElement(el._1.value, el._2)
+    }
+
+    def toVectorProperty(el: (PropertyId, BasicSparseVectorProperty[Double])): VectorProperty = {
+      val property = GamePropertyRegistry.vectorProperties.getOrElse(el._1, throw new RuntimeException(s"Unknown vector property ${el._1.value} encountered"))
+      VectorProperty(property.name, el._2.toList.map(toVectorElement))
+    }
+
     def toCellInfo(cell: CartesianCell) = {
+      val cellState = map.mapData.cellStateValue(cell)
+
       CellInfo(
         map.mapData.topology.cellCoordinates(cell).toPoint,
-        Nil,
-        Nil)
+        cellState.scalarProperties.toList.map(toScalarProperty),
+        cellState.vectorProperties.toList.map(toVectorProperty))
     }
 
     val filteredCells =

@@ -1,16 +1,17 @@
 package map
 
-import state.test.{TestCellState, TestCompositePropertyCellState, TestPropertyCellState, TestSparseVectorPropertyCellState}
+import state.property.SimpleCompositePropertyCellState
+import state.test.{TestCellState, TestPropertyCellState, TestSparseVectorPropertyCellState}
 import topology.space.CartesianCell
 
 object MapTest extends App {
   val numProperties = 10
   val startTime = System.currentTimeMillis()
   var testMap =
-    CartesianSpaceMap(1000,1000,true)(TestCellState.testCellStateOps[CartesianCell])
+    CartesianSpaceMap(1000,1000,true)(SimpleCompositePropertyCellState.cellStateOps[CartesianCell](1,0))
   val mapCreatedTime = System.currentTimeMillis()
-  implicit val stateDoubleValued = TestCellState.stateDoubleValued
-  implicit val stateShow = TestCellState.stateShow
+  implicit val stateDoubleValued = SimpleCompositePropertyCellState.stateDoubleValued
+  implicit val stateShow = SimpleCompositePropertyCellState.stateShow
   val testMapStats = MapStats(testMap)
   println(s"Initial map mean and std dev,: ${testMapStats.cellAverage}, ${testMapStats.cellStdDev}")
   //testMap.render
