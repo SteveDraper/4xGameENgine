@@ -647,8 +647,8 @@
 
             var firstLoc = cellData[0][0].location;
             var secondLoc = cellData[1] ? cellData[1][0].location : cellData[0][0].location;
-            self.xOffset = self.options.scalingFactor * self.options.hexSize - Math.min(firstLoc.x, secondLoc.x);
-            self.yOffset = self.options.scalingFactor * self.options.hexSize - firstLoc.y;
+            self.xOffset = self.options.hexSize * (1 - self.options.scalingFactor * Math.min(firstLoc.x, secondLoc.x));
+            self.yOffset = self.options.hexSize * (1 - self.options.scalingFactor * firstLoc.y);
 
             self.cells = _.map(cellData, function(row, rowIndex){
                 return _.map(row, function(c, colIndex){

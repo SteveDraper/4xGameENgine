@@ -29,7 +29,7 @@ define(['jquery', 'gamemap', 'apihelper'], function($, HexGameMap, helper){
     React.render(AppElement, document.body);
 */
 
-    $.get("http://localhost:9600/games/test/maps/test?leftX=0&rightX=10&topY=0&bottomY=4",
+    $.get("http://localhost:9600/games/test/maps/test?leftX=2&rightX=10&topY=3&bottomY=10",
         {},
         function(data) {
             new HexGameMap().initialize({
