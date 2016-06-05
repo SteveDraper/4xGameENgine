@@ -10,7 +10,9 @@ import topology.space.CartesianCell
 
 import scalaz.syntax.either._
 
-final case class GameMap(id: MapId, mapData: CartesianSpaceMap[SimpleCompositePropertyCellState])
+final case class GameMap(id: MapId,
+                         description: String,
+                         mapData: CartesianSpaceMap[SimpleCompositePropertyCellState])
 
 object GameMap {
   val testMapId = MapId("test")
@@ -21,7 +23,7 @@ object GameMap {
       .buildFrom(initializeProperties)
 
   def buildTestMap =
-    GameMap(testMapId, testMap)
+    GameMap(testMapId, "A 10 X 10 test map", testMap)
 
   def getGame(id: MapId) =
     if ( id == testMapId ) successM(testMap)
@@ -33,7 +35,7 @@ object GameMap {
       Math.sqrt((cellLocation.x - 5.0)*(cellLocation.x - 5.0) + (cellLocation.y - 5.0)*(cellLocation.y - 5.0))
 
     SimpleCompositePropertyCellState(
-      PropertyMapState.buildFrom[DoubleProperty](GamePropertyRegistry.scalarUpdaters,_=> distanceFrom5_5),
+      PropertyMapState.buildFrom[DoubleProperty](GamePropertyRegistry.scalarUpdaters,_=> Math.min(GamePropertyRegistry.maxHeight,distanceFrom5_5)),
       PropertyMapState.buildFrom[BasicSparseVectorProperty[DoubleProperty]](GamePropertyRegistry.vectorUpdaters,_=> null))
   }
 }

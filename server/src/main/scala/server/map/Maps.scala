@@ -1,6 +1,6 @@
 package server.map
 
-import model.GameId
+import model.{GameId, Span}
 import model.map._
 import model.property.{ScalarProperty, VectorProperty, VectorPropertyElement}
 import org.http4s.{Request, Response}
@@ -37,6 +37,15 @@ object Maps extends QueryParamHelper {
         game <- Game.getGame(gameId)
         map <- game.getMap(mapId)
       } yield buildMapResponse(maybeBounds, map)
+    }
+  }
+
+  def getMapMetadata(req: Request, gameId: GameId, mapId: MapId): Task[Response] = {
+    join {
+      for {
+        game <- Game.getGame(gameId)
+        map <- game.getMap(mapId)
+      } yield buildMapMetadataResponse(map)
     }
   }
 
@@ -94,6 +103,9 @@ object Maps extends QueryParamHelper {
     def normalizeRect(rect: Rectangle) = normalizeRectDimension(rect, max, lens)
     r.areas.map(normalizeRect).suml
   }
+
+  private def buildMapMetadataResponse(map: GameMap) =
+    MapMetadata(map.id.value, map.description, map.mapData.getMapTopology)
 
   private def buildMapResponse(maybeBounds: Option[Rectangle], map: GameMap) = {
     val topology =  map.mapData.getMapTopology

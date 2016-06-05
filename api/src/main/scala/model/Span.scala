@@ -1,5 +1,7 @@
-package server.map
+package model
 
+import argonaut.Argonaut._
+import argonaut.CodecJson
 import model.map.{Point, Rectangle}
 
 import scalaz.{Lens, Store}
@@ -18,4 +20,7 @@ object Span {
       (s:Span) => Rectangle(Point(r.topLeft.x,s.from), Point(r.bottomRight.x,s.to)),
       Span(r.topLeft.y, r.bottomRight.y)
     ))
+
+  implicit val codec: CodecJson[Span] =
+    casecodec2(Span.apply, Span.unapply)("min", "max")
 }
