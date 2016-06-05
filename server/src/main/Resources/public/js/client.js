@@ -11,9 +11,9 @@ require.config({
 		JSXTransformer: 'lib/jsxtransformer',
 		jsx: 'lib/require-jsx',
 		text: 'lib/require-text',
-		pixi: 'lib/pixi_current',
-//		pixi: 'https://cdnjs.cloudflare.com/ajax/libs/pixi.js/3.0.7/pixi.min',
-		hexPixi: 'lib/hexPixi'
+		pixi: 'lib/pixi.min',
+		hexPixi: 'lib/hexPixi',
+		gamemap: 'js/hexgamemap'
 
     },
     jsx: {
@@ -22,61 +22,23 @@ require.config({
 });
 
 // define(['jquery', 'react', 'jsx!js/app'], function($, React, App){
-define(['jquery', 'pixi', 'hexPixi'], function($, pixi, hexPixi){
+define(['jquery', 'gamemap'], function($, HexGameMap){
 
 /*    var AppElement = React.createElement(App);
     React.render(AppElement, document.body);
 */
 
-    var map = null;
-    var stage = new pixi.Container();
-    var renderer = new pixi.autoDetectRenderer(800, 600,
-     {
-        antialiasing: false,
-        transparent: false,
-        resolution: 1
-    });
-
-    renderer.backgroundColor = 0xFFFFFF;
-
-    function animate() {
-        window.requestAnimationFrame(animate);
-        // render the stage
-        renderer.render(stage);
-    }
-
-    function getOptions() {
-        return {
-            mapWidth: 10,
-            mapHeight: 8,
-            coordinateSystem: 2,
-            hexLineWidth: 2,
-            hexSize: 40,
-            showCoordinates: true,
-            textures: ["images/texture/grassTexture.jpg", "images/texture/waterTexture.jpg"],
-            terrainTypes: [
-                { name: "dirt", color: 0x9B5523 },
-                { name: "sand", color: 0xdBd588 },
-                { name: "snow", color: 0xebebfa },
-                { name: "water", textureIndex: 1, color: 0x4060fa },
-                { name: "grass", textureIndex: 0, color: 0x10fa10 }
-            ],
-            onAssetsLoaded: function () {
-                try{
-                    renderer.render(stage);
-                    animate();
-                }
-                catch (e){
-                    console.error(e);
-                }
-            }
-        };
-    }
-
-    var map = new hexPixi.Map(stage, getOptions());
-    map.generateRandomMap();
-    $('#mainmap').append(renderer.view);
-
+    $.get("http://localhost:9600/games/test/maps/test?leftX=0&rightX=10&topY=0&bottomY=4",
+        {},
+        function(data) {
+            new HexGameMap().initialize({
+                el: $('#mainmap'),
+                mapCells: data.cells || [],
+                cellSpacing: data.cellSpacing
+            });
+        },
+        'json'
+    );
 });
 
 
