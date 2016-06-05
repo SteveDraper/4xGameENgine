@@ -131,6 +131,8 @@
                 hexLineColor: 0x909090,
                 // The width in pixels of the hex outline.
                 hexLineWidth: 2,
+                // scaling from location data
+                scalingFactor: 1,
                 // If true then the hex's coordinates will be visible on the hex.
                 showCoordinates: false,
                 // Callback function (cell) that handles a hex being clicked on or tapped.
@@ -152,6 +154,7 @@
         self.hexes = new pixi.Graphics();
         self.container = new pixi.Container();
         self.pixiStage = null;
+        self.options = null;
         self.options = null;
         self.cells = [];
         self.camera = new hp.Camera(self);
@@ -389,9 +392,17 @@
             return center;
         }
 
+        function scale(location){
+            return {
+                x: location.x * self.options.scalingFactor * self.options.hexSize + self.xOffset,
+                y: location.y * self.options.scalingFactor * self.options.hexSize + self.yOffset
+            }
+        }
+
         // Takes a cell and creates all the graphics to display it.
         function createCell(cell) {
-            cell.center = getCellCenter(cell.column, cell.row, self.options.coordinateSystem);
+            // cell.center = getCellCenter(cell.column, cell.row, self.options.coordinateSystem);
+            cell.center = scale(cell.data.location);
 
             // Generate poly first then use poly to draw hex and create masks and all that.
             cell.poly = createHexPoly();
@@ -632,6 +643,13 @@
 
         // Generate from cell data as provided by server
         self.generateMap = function(cellData){
+            if (cellData.length === 0) { return; }
+
+            var firstLoc = cellData[0][0].location;
+            var secondLoc = cellData[1] ? cellData[1][0].location : cellData[0][0].location;
+            self.xOffset = self.options.scalingFactor * self.options.hexSize - Math.min(firstLoc.x, secondLoc.x);
+            self.yOffset = self.options.scalingFactor * self.options.hexSize - firstLoc.y;
+
             self.cells = _.map(cellData, function(row, rowIndex){
                 return _.map(row, function(c, colIndex){
                     var rnd = Math.floor((Math.random() * self.options.terrainTypes.length));

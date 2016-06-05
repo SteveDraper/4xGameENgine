@@ -35,7 +35,7 @@ define(['jquery', 'gamemap', 'apihelper'], function($, HexGameMap, helper){
             new HexGameMap().initialize({
                 el: $('#mainmap'),
                 mapCells: helper.indexCells(data.cells || []),
-                cellSpacing: data.cellSpacing
+                scalingFactor: helper.scalingFactor(data.topology.cellSpacing)
             });
         },
         'json'

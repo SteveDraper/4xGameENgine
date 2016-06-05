@@ -19,7 +19,8 @@ define([ 'pixi', 'hexPixi', 'jquery'
 
     GameMap.prototype.initialize = function(options){
 
-        var opts = options || {};
+        // TODO rationalize where defaults are set
+        var opts = _.defaults(options, {mapCells: [], scalingFactor: 1});
         var el = opts.el || $('<div>');
         this.$el = el instanceof $ ? el :  $(el);
         var renderer = this.renderer;
@@ -38,6 +39,7 @@ define([ 'pixi', 'hexPixi', 'jquery'
                 coordinateSystem: 1,
                 hexLineWidth: 2,
                 hexSize: opts.hexSize || 40,
+                scalingFactor: opts.scalingFactor,
                 showCoordinates: true,
                 textures: ["images/texture/grassTexture.jpg", "images/texture/waterTexture.jpg"],
                 terrainTypes: [
@@ -60,7 +62,7 @@ define([ 'pixi', 'hexPixi', 'jquery'
         }
 
         this.map = new hexPixi.Map(stage, getOptions());
-        this.map.generateMap(options.mapCells);
+        this.map.generateMap(opts.mapCells, { scalingFactor: opts.scalingFactor });
         this.$el.empty().append(this.renderer.view);
 
         return this;

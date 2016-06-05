@@ -17,6 +17,10 @@ define([ 'underscore' ], function(_) {
 
             // sort rows and return
             return _.map(_.sortBy(_.pairs(rowHash), _.first), _.last);
+        },
+
+        scalingFactor: function(spacing){
+            return (spacing / Math.sqrt(3));
         }
     }
 
