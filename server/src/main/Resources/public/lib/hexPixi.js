@@ -62,12 +62,15 @@
     };
 
     // The hexPixi.Cell object represents one map hex cell.
-    hp.Cell = function (rowNo, columnNo, terrainIndex) {
+    hp.Cell = function (rowNo, columnNo, data) {
         var self = this;
+        self.data = data || {};
+        self.data.location = _.defaults(self.data.location, { x: 0, y: 0});
         self.row = rowNo;
         self.column = columnNo;
         self.center = { x: 0, y: 0 };
-        self.terrainIndex = terrainIndex ? terrainIndex : 0;
+
+        self.terrainIndex = self.data.terrainIndex ? self.data.terrainIndex : 0;
         self.poly = null; // The cell's poly that is used as a hit area.
         self.outline = null; // The PIXI.Graphics outline of the cell's hex.
         self.inner = null; // If a non-textured cell then this is the PIXI.Graphics of the hex inner, otherwise a PIXI.Sprite.
@@ -87,9 +90,25 @@
             return {
                 row: self.row,
                 column: self.column,
-                terrainIndex: self.terrainIndex
+                terrainIndex: self.terrainIndex,
+                data: self.data
             };
         };
+
+        self.locationForDisplay = function(precision){
+            var loc = self.data.location;
+            var p = precision || 2;
+            return {
+                x: typeof loc.x === 'number' ? loc.x.toPrecision(p) : '',
+                y: typeof loc.y === 'number' ? loc.y.toPrecision(p) : ''
+            };
+        }
+
+        self.setCenter = function(xFactor, yFactor){
+            var loc = self.data.location;
+            self.center = { x: loc.x * xFactor, y: loc.y * yFactor };
+            return self;
+        }
     };
 
     // Scene graph heirarchy = pixiState -> container -> hexes
@@ -379,7 +398,7 @@
 
             if (self.options.showCoordinates) {
                 cell.text = new pixi.Text("1", { font: "10px Arial", fill: "black", dropShadow: "true", dropShadowDistance: 1, dropShadowColor: "white" });
-                cell.text.text = cell.column.toString() + ", " + cell.row.toString();
+                cell.text.text = cell.locationForDisplay().x + ", " + cell.locationForDisplay().y;
                 cell.text.position.x = -Math.round((cell.text.width / 2));
                 cell.text.position.y = 8 - Math.round(self.options.hexHeight / 2);
             }
@@ -563,12 +582,12 @@
                 self.cells.push([]);
                 for (var column = 0; column < self.options.mapWidth; column += 2) {
                     var exportedCell = exportedMap.cells[row][column];
-                    var cell = new hp.Cell(exportedCell.row, exportedCell.column, exportedCell.terrainIndex);
+                    var cell = new hp.Cell(exportedCell.row, exportedCell.column, exportedCell.data);
                     self.cells[cell.row].push(cell);
                 }
                 for (var column = 1; column < self.options.mapWidth; column += 2) {
                     var exportedCell = exportedMap.cells[row][column];
-                    var cell = new hp.Cell(exportedCell.row, exportedCell.column, exportedCell.terrainIndex);
+                    var cell = new hp.Cell(exportedCell.row, exportedCell.column, exportedCell.data);
                     self.cells[cell.row].push(cell);
                 }
             }
@@ -604,18 +623,19 @@
                 }
                 for (var column = 1; column < self.options.mapWidth; column += 2) {
                     var rnd = Math.floor((Math.random() * self.options.terrainTypes.length));
-                    var cell = new hp.Cell(row, column, rnd);
+                    var cell = new hp.Cell(row, column, { terrainIndex: rnd });
                     self.cells[cell.row].push(cell);
                 }
             }
             createSceneGraph();
         };
 
+        // Generate from cell data as provided by server
         self.generateMap = function(cellData){
             self.cells = _.map(cellData, function(row, rowIndex){
                 return _.map(row, function(c, colIndex){
                     var rnd = Math.floor((Math.random() * self.options.terrainTypes.length));
-                    return new hp.Cell(rowIndex, colIndex, rnd);
+                    return new hp.Cell(rowIndex, colIndex, _.extend({terrainIndex: rnd}, c));
                 });
             });
             createSceneGraph();

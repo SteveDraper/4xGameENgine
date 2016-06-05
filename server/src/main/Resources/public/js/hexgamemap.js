@@ -35,7 +35,7 @@ define([ 'pixi', 'hexPixi', 'jquery'
             return {
                 mapWidth: opts.mapWidth || 10,
                 mapHeight: opts.mapHeight || 8,
-                coordinateSystem: 2,
+                coordinateSystem: 1,
                 hexLineWidth: 2,
                 hexSize: opts.hexSize || 40,
                 showCoordinates: true,
