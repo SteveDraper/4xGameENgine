@@ -611,6 +611,16 @@
             createSceneGraph();
         };
 
+        self.generateMap = function(cellData){
+            self.cells = _.map(cellData, function(row, rowIndex){
+                return _.map(row, function(c, colIndex){
+                    var rnd = Math.floor((Math.random() * self.options.terrainTypes.length));
+                    return new hp.Cell(rowIndex, colIndex, rnd);
+                });
+            });
+            createSceneGraph();
+        },
+
         self.generateBlankMap = function () {
             for (var row = 0; row < self.options.mapHeight; row++) {
                 self.cells.push([]);

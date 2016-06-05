@@ -13,7 +13,8 @@ require.config({
 		text: 'lib/require-text',
 		pixi: 'lib/pixi.min',
 		hexPixi: 'lib/hexPixi',
-		gamemap: 'js/hexgamemap'
+		gamemap: 'js/hexgamemap',
+		apihelper: 'js/apihelper'
 
     },
     jsx: {
@@ -22,7 +23,7 @@ require.config({
 });
 
 // define(['jquery', 'react', 'jsx!js/app'], function($, React, App){
-define(['jquery', 'gamemap'], function($, HexGameMap){
+define(['jquery', 'gamemap', 'apihelper'], function($, HexGameMap, helper){
 
 /*    var AppElement = React.createElement(App);
     React.render(AppElement, document.body);
@@ -33,7 +34,7 @@ define(['jquery', 'gamemap'], function($, HexGameMap){
         function(data) {
             new HexGameMap().initialize({
                 el: $('#mainmap'),
-                mapCells: data.cells || [],
+                mapCells: helper.indexCells(data.cells || []),
                 cellSpacing: data.cellSpacing
             });
         },

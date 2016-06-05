@@ -60,7 +60,7 @@ define([ 'pixi', 'hexPixi', 'jquery'
         }
 
         this.map = new hexPixi.Map(stage, getOptions());
-        this.map.generateRandomMap();
+        this.map.generateMap(options.mapCells);
         this.$el.empty().append(this.renderer.view);
 
         return this;
