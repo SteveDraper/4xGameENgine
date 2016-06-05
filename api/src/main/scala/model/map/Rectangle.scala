@@ -3,14 +3,7 @@ package model.map
 import argonaut.Argonaut._
 import argonaut.CodecJson
 
-final case class Rectangle(topLeft: Point, bottomRight: Point) {
-  def contains(p: Point) = {
-    (p.x >= topLeft.x &&
-     p.x <= bottomRight.x &&
-     p.y >= topLeft.y &&
-     p.y <= bottomRight.y)
-  }
-}
+final case class Rectangle(topLeft: Point, bottomRight: Point)
 
 object Rectangle {
   implicit val codec: CodecJson[Rectangle] =

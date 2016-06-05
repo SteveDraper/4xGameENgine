@@ -3,6 +3,7 @@ package server
 import model.GameId
 import model.map.MapId
 import ApiHelper._
+import server.map.GameMap
 
 import scalaz.syntax.either._
 import scalaz.syntax.std.option._

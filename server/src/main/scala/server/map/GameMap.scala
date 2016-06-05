@@ -1,11 +1,9 @@
-package server
+package server.map
 
 import map.CartesianSpaceMap
 import model.map.MapId
-import state.test.TestCellState
-import ApiHelper._
+import server.ApiHelper._
 import server.properties.GamePropertyRegistry
-import state.CellState
 import state.property.DoubleProperty.DoubleProperty
 import state.property.{BasicSparseVectorProperty, PropertyMapState, SimpleCompositePropertyCellState}
 import topology.space.CartesianCell

@@ -1,18 +1,25 @@
-package server
+package server.map
 
-import org.http4s.{Request, Response}
-import ApiHelper._
 import model.GameId
 import model.map._
 import model.property.{ScalarProperty, VectorProperty, VectorPropertyElement}
+import org.http4s.{Request, Response}
+import server.ApiHelper._
 import server.properties.GamePropertyRegistry
+import server.{Game, QueryParamHelper}
 import state.property.{BasicSparseVectorProperty, ElementId, PropertyId}
 import topology.space.CartesianCell
 
 import scalaz.concurrent.Task
 import scalaz.syntax.either._
 import scalaz.syntax.std.boolean._
+import scalaz.syntax.foldable._
+import scalaz.std.list._
+import RegionOps._
+import AreaOps._
+import SimpleRegion._
 
+import scalaz.Lens
 
 object Maps extends QueryParamHelper {
   val paramTopY = "topY"
@@ -62,57 +69,49 @@ object Maps extends QueryParamHelper {
 
   private def normalizeRectDimension(r: Rectangle,
                                      max: Double,
-                                     getter: Rectangle=>(Double,Double),
-                                     setter:(Rectangle,Double,Double)=>Rectangle): List[Rectangle] = {
-    def normalizeRange(range: (Double,Double)) = {
-      if (Math.abs(range._1 - range._2) > max) {
-        (range._1, range._1 + max)
+                                     lens: Lens[Rectangle,Span]): SimpleRegion = {
+    def normalizeRange(range: Span) = {
+      if (Math.abs(range.from - range.to) > max) {
+        Span(range.from, range.to + max)
       }
       else range
     }
 
-    val raw = normalizeRange(getter(r))
-    val normalized = (normalizeDimension(raw._1,max), normalizeDimension(raw._2,max))
+    val raw = normalizeRange(lens.get(r))
+    val normalized = Span(normalizeDimension(raw.from,max), normalizeDimension(raw.to,max))
 
-    if (normalized._1 < normalized._2) List(setter(r,normalized._1,normalized._2))
+    if (normalized.from < normalized.to) SimpleRegion(List(lens.set(r, normalized)))
     else
-      List(
-        setter(r,0.0,normalized._2),
-        setter(r,normalized._1, max)
-      )
+      SimpleRegion(List(
+        lens.set(r,Span(0.0,normalized.to)),
+        lens.set(r,Span(normalized.from, max))
+      ))
+  }
+
+  private def normalizeRegionDimension(r: SimpleRegion,
+                                       max: Double,
+                                       lens: Lens[Rectangle,Span]): SimpleRegion = {
+    def normalizeRect(rect: Rectangle) = normalizeRectDimension(rect, max, lens)
+    r.areas.map(normalizeRect).suml
   }
 
   private def buildMapResponse(maybeBounds: Option[Rectangle], map: GameMap) = {
     val topology =  map.mapData.getMapTopology
 
-    def boundsChecker(bounds: List[Rectangle])(cell: CartesianCell) = {
+    def boundsChecker(bounds: SimpleRegion)(cell: CartesianCell) = {
       val cellLocation = map.mapData.topology.cellCoordinates(cell).toPoint
-      bounds.exists(_.contains(cellLocation))
+      bounds.contains(cellLocation)
     }
 
     def makeBoundsList(rawBounds: Rectangle) = {
-      def xGetter(r: Rectangle) = (r.topLeft.x,r.bottomRight.x)
-      def xSetter(r: Rectangle, left: Double, right: Double) =
-        Rectangle(Point(left,r.topLeft.y), Point(right,r.bottomRight.y))
-      def yGetter(r: Rectangle) = (r.topLeft.y,r.bottomRight.y)
-      def ySetter(r: Rectangle, top: Double, bottom: Double) =
-        Rectangle(Point(r.topLeft.x,top), Point(r.bottomRight.x,bottom))
-
-      val xAdjusted =
-        normalizeRectDimension(
-          rawBounds,
+      normalizeRegionDimension(
+        normalizeRegionDimension(
+          SimpleRegion(List(rawBounds)),
           map.mapData.projectionWidth,
-          xGetter,
-          xSetter)
-      val result = xAdjusted.map(r =>
-        normalizeRectDimension(
-          r,
-          map.mapData.projectionHeight,
-          yGetter,
-          ySetter
-        )).flatten
-
-      result
+          Span.rectxLens),
+        map.mapData.projectionHeight,
+        Span.rectyLens
+      )
     }
 
     def toScalarProperty(el: (PropertyId, Double)): ScalarProperty = {

@@ -4,6 +4,7 @@ import model.GameId
 import model.map.MapId
 import org.http4s.dsl._
 import org.http4s.server.HttpService
+import server.map.Maps
 
 
 object AscentService {
