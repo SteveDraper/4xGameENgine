@@ -19,6 +19,7 @@ import RegionOps._
 import AreaOps._
 import SimpleRegion._
 import monocle.Lens
+import server.player.User
 
 object Maps extends QueryParamHelper {
   val paramTopY = "topY"
@@ -33,9 +34,10 @@ object Maps extends QueryParamHelper {
     join {
       for {
         maybeBounds <- validateBounds(req)
+        user <- User.getCurrentUser(req)
         game <- Game.getGame(gameId)
         map <- game.getMap(mapId)
-      } yield buildMapResponse(maybeBounds, map)
+      } yield buildMapResponse(maybeBounds, map, user)
     }
   }
 
@@ -79,8 +81,8 @@ object Maps extends QueryParamHelper {
                                      max: Double,
                                      lens: Lens[Rectangle,Span]): SimpleRegion = {
     def normalizeRange(range: Span) = {
-      if (Math.abs(range.from - range.to) > max) {
-        Span(range.from, range.to + max)
+      if (range.size > max) {
+        Span(range.from, range.from + max)
       }
       else range
     }
@@ -106,8 +108,8 @@ object Maps extends QueryParamHelper {
   private def buildMapMetadataResponse(map: GameMap) =
     MapMetadata(map.id.value, map.description, map.mapData.getMapTopology)
 
-  private def buildMapResponse(maybeBounds: Option[Rectangle], map: GameMap) = {
-    val topology =  map.mapData.getMapTopology
+  private def buildMapResponse(maybeBounds: Option[Rectangle], map: GameMap, user: User) = {
+    val topology = map.mapData.getMapTopology
 
     def boundsChecker(bounds: SimpleRegion)(cell: CartesianCell) = {
       val cellLocation = map.mapData.topology.cellCoordinates(cell).toPoint
@@ -139,19 +141,42 @@ object Maps extends QueryParamHelper {
       VectorProperty(property.name, el._2.toList.map(toVectorElement))
     }
 
+    //  Normalize into user visible frame ASSUMING the provided global coordinates
+    //  do fall into that visible frame
+    def toFrame(frame: Rectangle, p: Point) = {
+      val result = Point(
+        (frame.topLeft.x > p.x) ?
+          (p.x + map.mapData.projectionWidth) |
+          ((frame.bottomRight.x < p.x) ?
+            (p.x - map.mapData.projectionWidth) |
+            p.x),
+        (frame.topLeft.y > p.y) ?
+          (p.y + map.mapData.projectionHeight) |
+          ((frame.bottomRight.y < p.y) ?
+            (p.y - map.mapData.projectionHeight) |
+            p.y))
+
+      result
+    }
+
     def toCellInfo(cell: CartesianCell) = {
       val cellState = map.mapData.cellStateValue(cell)
-
+      val cellUserCoords =
+        toFrame(
+          user.visibleBounds,
+          map.mapData.topology.cellCoordinates(cell).toPoint - user.origin)
       CellInfo(
-        map.mapData.topology.cellCoordinates(cell).toPoint,
+        cellUserCoords,
         cellState.scalarProperties.toList.map(toScalarProperty),
         cellState.vectorProperties.toList.map(toVectorProperty))
     }
 
+    val visibleBoundsFilteredCells =
+      map.mapData.cells.filter(boundsChecker(makeBoundsList(user.visibleBounds + user.origin)))
     val filteredCells =
       maybeBounds.fold(
-        map.mapData.cells)(bounds =>
-        map.mapData.cells.filter(boundsChecker(makeBoundsList(bounds))))
+        visibleBoundsFilteredCells)(bounds =>
+        visibleBoundsFilteredCells.filter(boundsChecker(makeBoundsList(bounds + user.origin))))
     MapResponse(
       topology,
       Nil,
