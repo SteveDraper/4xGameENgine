@@ -18,8 +18,7 @@ import scalaz.std.list._
 import RegionOps._
 import AreaOps._
 import SimpleRegion._
-
-import scalaz.Lens
+import monocle.Lens
 
 object Maps extends QueryParamHelper {
   val paramTopY = "topY"
@@ -89,11 +88,11 @@ object Maps extends QueryParamHelper {
     val raw = normalizeRange(lens.get(r))
     val normalized = Span(normalizeDimension(raw.from,max), normalizeDimension(raw.to,max))
 
-    if (normalized.from < normalized.to) SimpleRegion(List(lens.set(r, normalized)))
+    if (normalized.from < normalized.to) SimpleRegion(List(lens.set(normalized)(r)))
     else
       SimpleRegion(List(
-        lens.set(r,Span(0.0,normalized.to)),
-        lens.set(r,Span(normalized.from, max))
+        lens.set(Span(0.0,normalized.to))(r),
+        lens.set(Span(normalized.from, max))(r)
       ))
   }
 
