@@ -149,7 +149,7 @@ object Maps extends QueryParamHelper {
     //  Normalize into user visible frame ASSUMING the provided global coordinates
     //  do fall into that visible frame
     def toFrame(frame: Rectangle, p: Point) = {
-      val result = Point(
+      Point(
         (frame.topLeft.x > p.x) ?
           (p.x + map.mapData.projectionWidth) |
           ((frame.bottomRight.x < p.x) ?
@@ -160,8 +160,6 @@ object Maps extends QueryParamHelper {
           ((frame.bottomRight.y < p.y) ?
             (p.y - map.mapData.projectionHeight) |
             p.y))
-
-      result
     }
 
     def toCellInfo(cell: CartesianCell) = {

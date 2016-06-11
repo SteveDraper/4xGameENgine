@@ -24,7 +24,7 @@ object Game {
     Game(
       testGameId,
       Map(
-        smallTestMapId -> GameMap.buildTestMap(15, smallTestMapId),
+        smallTestMapId -> GameMap.buildTestMap(16, smallTestMapId),
         largeTestMapId -> GameMap.buildTestMap(100, largeTestMapId)))
 
   def getGame(id: GameId) =

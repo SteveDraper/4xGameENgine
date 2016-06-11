@@ -17,11 +17,12 @@ final case class GameMap(id: MapId,
 
 object GameMap {
   def buildTestMap(n: Int, id: MapId) = {
+    val legalN = 2*(n/2)  //  Must be even
     val mapSpace =
-      CartesianSpaceMap(n,n,true)(SimpleCompositePropertyCellState.cellStateOps[CartesianCell](1,0))
+      CartesianSpaceMap(legalN,n,true)(SimpleCompositePropertyCellState.cellStateOps[CartesianCell](1,0))
     GameMap(
       id,
-      s"A $n X $n test map",
+      s"A $legalN X $n test map",
       mapSpace.buildFrom(initializeProperties(mapSpace.topology)))
   }
 
