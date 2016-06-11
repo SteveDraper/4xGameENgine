@@ -16,12 +16,16 @@ final case class Game(id: GameId, maps: Map[MapId, GameMap]) {
 
 object Game {
   val testGameId = GameId("test")
+  val smallTestMapId = MapId("test")
+  val largeTestMapId = MapId("testLarge")
   lazy val testGame = buildTestGame
 
   def buildTestGame =
     Game(
       testGameId,
-      Map(GameMap.testMapId -> GameMap.buildTestMap))
+      Map(
+        smallTestMapId -> GameMap.buildTestMap(15, smallTestMapId),
+        largeTestMapId -> GameMap.buildTestMap(100, largeTestMapId)))
 
   def getGame(id: GameId) =
     if ( id == testGameId ) successM(testGame)

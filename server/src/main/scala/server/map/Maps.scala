@@ -13,6 +13,7 @@ import topology.space.CartesianCell
 import scalaz.concurrent.Task
 import scalaz.syntax.either._
 import scalaz.syntax.std.boolean._
+import scalaz.syntax.std.option._
 import scalaz.syntax.foldable._
 import scalaz.std.list._
 import RegionOps._
@@ -37,7 +38,8 @@ object Maps extends QueryParamHelper {
         user <- User.getCurrentUser(req)
         game <- Game.getGame(gameId)
         map <- game.getMap(mapId)
-      } yield buildMapResponse(maybeBounds, map, user)
+        mapView <- wrapM(user.maps.get(mapId) \/> notFound(s"Map '$mapId' not found"))
+      } yield buildMapResponse(maybeBounds, map, mapView)
     }
   }
 
@@ -108,7 +110,7 @@ object Maps extends QueryParamHelper {
   private def buildMapMetadataResponse(map: GameMap) =
     MapMetadata(map.id.value, map.description, map.mapData.getMapTopology)
 
-  private def buildMapResponse(maybeBounds: Option[Rectangle], map: GameMap, user: User) = {
+  private def buildMapResponse(maybeBounds: Option[Rectangle], map: GameMap, view: MapView) = {
     val topology = map.mapData.getMapTopology
 
     def boundsChecker(bounds: SimpleRegion)(cell: CartesianCell) = {
@@ -163,8 +165,8 @@ object Maps extends QueryParamHelper {
       val cellState = map.mapData.cellStateValue(cell)
       val cellUserCoords =
         toFrame(
-          user.visibleBounds,
-          map.mapData.topology.cellCoordinates(cell).toPoint - user.origin)
+          view.visibleBounds,
+          map.mapData.topology.cellCoordinates(cell).toPoint - view.origin)
       CellInfo(
         cellUserCoords,
         cellState.scalarProperties.toList.map(toScalarProperty),
@@ -172,11 +174,11 @@ object Maps extends QueryParamHelper {
     }
 
     val visibleBoundsFilteredCells =
-      map.mapData.cells.filter(boundsChecker(makeBoundsList(user.visibleBounds + user.origin)))
+      map.mapData.cells.filter(boundsChecker(makeBoundsList(view.visibleBounds + view.origin)))
     val filteredCells =
       maybeBounds.fold(
         visibleBoundsFilteredCells)(bounds =>
-        visibleBoundsFilteredCells.filter(boundsChecker(makeBoundsList(bounds + user.origin))))
+        visibleBoundsFilteredCells.filter(boundsChecker(makeBoundsList(bounds + view.origin))))
     MapResponse(
       topology,
       Nil,

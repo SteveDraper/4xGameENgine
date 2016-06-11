@@ -6,6 +6,7 @@ import server.ApiHelper._
 import server.properties.GamePropertyRegistry
 import state.property.DoubleProperty.DoubleProperty
 import state.property.{BasicSparseVectorProperty, PropertyMapState, SimpleCompositePropertyCellState}
+import topology.{CartesianProjection, Space}
 import topology.space.CartesianCell
 
 import scalaz.syntax.either._
@@ -15,22 +16,17 @@ final case class GameMap(id: MapId,
                          mapData: CartesianSpaceMap[SimpleCompositePropertyCellState])
 
 object GameMap {
-  val testMapId = MapId("test")
-  val testMapSpace =
-    CartesianSpaceMap(10,10,true)(SimpleCompositePropertyCellState.cellStateOps[CartesianCell](1,0))
-  lazy val testMap =
-    testMapSpace
-      .buildFrom(initializeProperties)
+  def buildTestMap(n: Int, id: MapId) = {
+    val mapSpace =
+      CartesianSpaceMap(n,n,true)(SimpleCompositePropertyCellState.cellStateOps[CartesianCell](1,0))
+    GameMap(
+      id,
+      s"A $n X $n test map",
+      mapSpace.buildFrom(initializeProperties(mapSpace.topology)))
+  }
 
-  def buildTestMap =
-    GameMap(testMapId, "A 10 X 10 test map", testMap)
-
-  def getGame(id: MapId) =
-    if ( id == testMapId ) successM(testMap)
-    else wrapM(notFound(s"Map '$id' not found").left)
-
-  private def initializeProperties(cell: CartesianCell): SimpleCompositePropertyCellState = {
-    val cellLocation = testMapSpace.topology.cellCoordinates(cell).toPoint
+  private def initializeProperties(topology: CartesianProjection[CartesianCell])(cell: CartesianCell): SimpleCompositePropertyCellState = {
+    val cellLocation = topology.cellCoordinates(cell).toPoint
     val distanceFrom5_5 =
       Math.sqrt((cellLocation.x - 5.0)*(cellLocation.x - 5.0) + (cellLocation.y - 5.0)*(cellLocation.y - 5.0))
 
