@@ -62,13 +62,12 @@
     };
 
     // The hexPixi.Cell object represents one map hex cell.
-    hp.Cell = function (rowNo, columnNo, data) {
+    hp.Cell = function (rowNo, columnNo, center, data) {
         var self = this;
         self.data = data || {};
-        self.data.location = _.defaults(self.data.location, { x: 0, y: 0});
         self.row = rowNo;
         self.column = columnNo;
-        self.center = { x: 0, y: 0 };
+        self.center = center || { x: 0, y: 0 };
 
         self.terrainIndex = self.data.terrainIndex ? self.data.terrainIndex : 0;
         self.poly = null; // The cell's poly that is used as a hit area.
@@ -132,8 +131,6 @@
                 // The width in pixels of the hex outline.
                 hexLineWidth: 2,
                 // scaling from location data
-                scalingFactor: 1,
-                // If true then the hex's coordinates will be visible on the hex.
                 showCoordinates: false,
                 // Callback function (cell) that handles a hex being clicked on or tapped.
                 onHexClick: null,
@@ -392,17 +389,9 @@
             return center;
         }
 
-        function scale(location){
-            return {
-                x: location.x * self.options.scalingFactor * self.options.hexSize + self.xOffset,
-                y: location.y * self.options.scalingFactor * self.options.hexSize + self.yOffset
-            }
-        }
-
         // Takes a cell and creates all the graphics to display it.
         function createCell(cell) {
             // cell.center = getCellCenter(cell.column, cell.row, self.options.coordinateSystem);
-            cell.center = scale(cell.data.location);
 
             // Generate poly first then use poly to draw hex and create masks and all that.
             cell.poly = createHexPoly();
@@ -642,18 +631,25 @@
         };
 
         // Generate from cell data as provided by server
-        self.generateMap = function(cellData){
-            if (cellData.length === 0) { return; }
+        // TODO make sensitive to mapWidth mapHeight. Also add a mapCenter.
+        self.generateMap = function(cellArray, scalingFactor){
+            if (cellArray.length === 0) { return; }
 
-            var firstLoc = cellData[0][0].location;
-            var secondLoc = cellData[1] ? cellData[1][0].location : cellData[0][0].location;
-            self.xOffset = self.options.hexSize * (1 - self.options.scalingFactor * Math.min(firstLoc.x, secondLoc.x));
-            self.yOffset = self.options.hexSize * (1 - self.options.scalingFactor * firstLoc.y);
+            var scale = scalingFactor || 1.0;
+            var firstLoc = cellArray[0][0].location;
+            var secondLoc = cellArray[1] ? cellArray[1][0].location : cellArray[0][0].location;
+            self.xOffset = self.options.hexSize * (1 - scale * Math.min(firstLoc.x, secondLoc.x));
+            self.yOffset = self.options.hexSize * (1 - scale * firstLoc.y);
 
-            self.cells = _.map(cellData, function(row, rowIndex){
-                return _.map(row, function(c, colIndex){
+
+            self.cells = _.map(cellArray, function(row, rowIndex){
+                return _.map(row, function(cell, colIndex){
+                    var cellCenter = {
+                        x: cell.location.x * scale * self.options.hexSize + self.xOffset,
+                        y: cell.location.y * scale * self.options.hexSize + self.yOffset
+                    }
                     var rnd = Math.floor((Math.random() * self.options.terrainTypes.length));
-                    return new hp.Cell(rowIndex, colIndex, _.extend({terrainIndex: rnd}, c));
+                    return new hp.Cell(rowIndex, colIndex, cellCenter, _.extend({ terrainIndex: rnd }, cell));
                 });
             });
             createSceneGraph();

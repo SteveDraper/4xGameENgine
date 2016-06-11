@@ -1,3 +1,7 @@
+/*
+ * Useful functions that may end up somewhere else
+ */
+
 define([ 'underscore' ], function(_) {
 	"use strict";
 
@@ -19,6 +23,7 @@ define([ 'underscore' ], function(_) {
             return _.map(_.sortBy(_.pairs(rowHash), _.first), _.last);
         },
 
+        // scale server dimensions to one cell's width
         scalingFactor: function(spacing){
             return (spacing / Math.sqrt(3));
         }

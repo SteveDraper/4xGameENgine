@@ -1,9 +1,19 @@
-define([ 'pixi', 'hexPixi', 'jquery'
-    ], function(pixi, hexPixi, $) {
-	"use strict";
+define([ 'pixi', 'hexPixi', 'jquery', 'underscore', 'apihelper'
+    ], function(pixi, hexPixi, $, _, helper) {
+    "use strict";
 
-    function GameMap(){
+    /*
+     *
+     */
+    function GameMap(options){
+        var opts = options || {};
+        // model initialization
+        this.gameId = opts.gameId || 'test';
+        this.mapId = opts.mapId || 'test';
+        this.mapCells = [];
         this.map = null;
+        this.uri = "http://localhost:9600/games/" + this.gameId +"/maps/" + this.mapId;
+        this.queryString = _.template("leftX=<%= leftX %>&rightX=<%= rightX %>&topY=<%= topY %>&bottomY=<%= bottomY %>");
         this.stage = new pixi.Container();
         this.renderer = new pixi.autoDetectRenderer(
             800,
@@ -17,29 +27,31 @@ define([ 'pixi', 'hexPixi', 'jquery'
         this.renderer.backgroundColor = 0xFFFFFF;
     }
 
+    /*
+     * Deals with view setup
+     */
     GameMap.prototype.initialize = function(options){
-
-        // TODO rationalize where defaults are set
-        var opts = _.defaults(options, {mapCells: [], scalingFactor: 1});
+        var opts = _.defaults(options, { mapWidth: 10, mapHeight: 8, hexSize: 40 });
         var el = opts.el || $('<div>');
         this.$el = el instanceof $ ? el :  $(el);
+
         var renderer = this.renderer;
         var stage = this.stage;
+        var scalingFactor = this.scalingFactor;
 
         function animate() {
             window.requestAnimationFrame(animate);
-            // render the stage
             renderer.render(stage);
         }
 
-        function getOptions() {
+        var self = this;
+        var getOptions = function() {
             return {
-                mapWidth: opts.mapWidth || 10,
-                mapHeight: opts.mapHeight || 8,
+                mapWidth: opts.mapWidth,
+                mapHeight: opts.mapHeight,
                 coordinateSystem: 1,
                 hexLineWidth: 2,
-                hexSize: opts.hexSize || 40,
-                scalingFactor: opts.scalingFactor,
+                hexSize: opts.hexSize,
                 showCoordinates: true,
                 textures: ["images/texture/grassTexture.jpg", "images/texture/waterTexture.jpg"],
                 terrainTypes: [
@@ -59,13 +71,47 @@ define([ 'pixi', 'hexPixi', 'jquery'
                     }
                 }
             };
-        }
+        }.bind(this);
 
         this.map = new hexPixi.Map(stage, getOptions());
-        this.map.generateMap(opts.mapCells, { scalingFactor: opts.scalingFactor });
-        this.$el.empty().append(this.renderer.view);
-
         return this;
+    }
+
+    /*
+     * Set topology info from 'topology' element in response
+     */
+    GameMap.prototype.setTopology = function(topology){
+        if (!(topology && topology.cellSpacing)) { return; }
+        this.scalingFactor = helper.scalingFactor(topology.cellSpacing);
+    }
+
+    /**
+     * bounds - { leftX: nn, rightX: nn, topY: nn, bottomY: nn }
+     * done - function to call after fetched and rendered
+     */
+
+    GameMap.prototype.fetch = function(bounds, done){
+       var b = _.defaults(bounds || {}, { leftX: -10, rightX: 10, topY: -10, bottomY: 10 });
+
+       $.get(
+            this.uri + '?' + this.queryString(b),
+            {},
+            function(data){
+                this.mapCells = helper.indexCells(data.cells || []);
+                this.setTopology(data.topology);
+                this.render();
+                if (done) { done(); };
+            }.bind(this),
+            'json'
+       );
+    }
+
+    /*
+     * Currently renders all map cells. TODO: render just a subarea
+     */
+    GameMap.prototype.render = function(){
+        this.map.generateMap(this.mapCells, this.scalingFactor);
+        this.$el.empty().append(this.renderer.view);
     }
 
     return GameMap;

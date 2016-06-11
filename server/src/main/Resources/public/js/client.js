@@ -29,17 +29,10 @@ define(['jquery', 'gamemap', 'apihelper'], function($, HexGameMap, helper){
     React.render(AppElement, document.body);
 */
 
-    $.get("http://localhost:9600/games/test/maps/test?leftX=2&rightX=10&topY=3&bottomY=10",
-        {},
-        function(data) {
-            new HexGameMap().initialize({
-                el: $('#mainmap'),
-                mapCells: helper.indexCells(data.cells || []),
-                scalingFactor: helper.scalingFactor(data.topology.cellSpacing)
-            });
-        },
-        'json'
-    );
+    new HexGameMap().initialize({
+        el: $('#mainmap'),
+        hexSize: 40, // px
+    }).fetch({ leftX: 0, rightX: 10, topY: 0, bottomY: 10});
 });
 
 
