@@ -25,8 +25,8 @@ object User {
       MapView(
         Point(0.0, 0.0),
         Rectangle(
-          Point(-gameMap.mapData.projectionWidth/2, -gameMap.mapData.projectionWidth/2),
-          Point(gameMap.mapData.projectionHeight/2, gameMap.mapData.projectionHeight/2))
+          Point(-gameMap.mapData.projectionWidth/2, -gameMap.mapData.projectionHeight/2),
+          Point(gameMap.mapData.projectionWidth/2, gameMap.mapData.projectionHeight/2))
       )
   }
 }

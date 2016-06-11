@@ -4,6 +4,9 @@ import model.map.{Hex, MapTopology, MapTopologyProvider}
 import topology.space.CartesianCell
 import topology.{CartesianCoordinates, CartesianProjection, Neighbourhood, Space}
 
+import scalaz.syntax.std.boolean._
+import scalaz.std.option._
+
 case class HexSpace(width: Int, height: Int, wrapX: Boolean, wrapY: Boolean)
   extends Space[CartesianCell]
     with CartesianProjection[CartesianCell]
@@ -28,7 +31,11 @@ case class HexSpace(width: Int, height: Int, wrapX: Boolean, wrapY: Boolean)
     HexSpace.root3*height
 
   def getMapTopology: MapTopology =
-    MapTopology(Hex, wrapX, wrapY, HexSpace.root3)
+    MapTopology(
+      Hex,
+      wrapX ? some(projectionWidth) | None,
+      wrapY ? some(projectionHeight) | None,
+      HexSpace.root3)
 }
 
 object HexSpace {

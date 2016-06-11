@@ -31,13 +31,32 @@ object TopologyFamily {
 }
 
 final case class MapTopology(baseType: TopologyFamily,
-                             xWrap: Boolean,
-                             yWrap: Boolean,
+                             xWrap: Option[Double],
+                             yWrap: Option[Double],
                              cellSpacing: Double)
 
 object MapTopology {
-  implicit val codec: CodecJson[MapTopology] =
-    casecodec4(MapTopology.apply, MapTopology.unapply)("baseType","xWrap","yWrap","cellSpacing")
+  val baseTypeField = "baseType"
+  val xWrapField = "xWrap"
+  val yWrapField = "yxWrap"
+  val cellSpacingField = "cellSpacing"
+
+  implicit val encode: EncodeJson[MapTopology] =
+    EncodeJson[MapTopology]((p: MapTopology) => {
+      (baseTypeField := p.baseType) ->:
+      (cellSpacingField := p.cellSpacing) ->:
+      (xWrapField :?= p.xWrap) ->?:
+      (yWrapField :?= p.yWrap) ->?:
+      Json.jEmptyObject
+    })
+
+  implicit val decode: DecodeJson[MapTopology] =
+    DecodeJson(c => for {
+      baseType <- (c --\ baseTypeField).as[TopologyFamily]
+      cellSpacing <- (c --\ cellSpacingField).as[Double]
+      xWrap <- (c --\ xWrapField).as[Option[Double]]
+      yWrap <- (c --\ yWrapField).as[Option[Double]]
+    } yield MapTopology(baseType, xWrap, yWrap, cellSpacing))
 }
 
 trait MapTopologyProvider {

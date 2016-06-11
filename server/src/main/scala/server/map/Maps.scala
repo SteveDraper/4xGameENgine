@@ -14,6 +14,7 @@ import scalaz.concurrent.Task
 import scalaz.syntax.either._
 import scalaz.syntax.std.boolean._
 import scalaz.syntax.std.option._
+import scalaz.std.option._
 import scalaz.syntax.foldable._
 import scalaz.std.list._
 import RegionOps._
@@ -46,9 +47,11 @@ object Maps extends QueryParamHelper {
   def getMapMetadata(req: Request, gameId: GameId, mapId: MapId): Task[Response] = {
     join {
       for {
+        user <- User.getCurrentUser(req)
         game <- Game.getGame(gameId)
         map <- game.getMap(mapId)
-      } yield buildMapMetadataResponse(map)
+        mapView <- wrapM(user.maps.get(mapId) \/> notFound(s"Map '$mapId' not found"))
+      } yield buildMapMetadataResponse(map, mapView)
     }
   }
 
@@ -107,8 +110,8 @@ object Maps extends QueryParamHelper {
     r.areas.map(normalizeRect).suml
   }
 
-  private def buildMapMetadataResponse(map: GameMap) =
-    MapMetadata(map.id.value, map.description, map.mapData.getMapTopology)
+  private def buildMapMetadataResponse(map: GameMap, view: MapView) =
+    MapMetadata(map.id.value, map.description, knownTopology(map.mapData.getMapTopology,view))
 
   private def buildMapResponse(maybeBounds: Option[Rectangle], map: GameMap, view: MapView) = {
     val topology = map.mapData.getMapTopology
@@ -180,7 +183,7 @@ object Maps extends QueryParamHelper {
         visibleBoundsFilteredCells)(bounds =>
         visibleBoundsFilteredCells.filter(boundsChecker(makeBoundsList(bounds + view.origin))))
     MapResponse(
-      topology,
+      knownTopology(topology, view),
       Nil,
       filteredCells
         .map(toCellInfo)
@@ -188,4 +191,12 @@ object Maps extends QueryParamHelper {
     )
   }
 
+  private def knownTopology(t: MapTopology, view: MapView) = {
+    MapTopology(
+      t.baseType,
+      t.xWrap.flatMap(d => (Span.rectxLens.get(view.visibleBounds).size >= d) ? some(d) | None),
+      t.yWrap.flatMap(d => (Span.rectyLens.get(view.visibleBounds).size >= d) ? some(d) | None),
+      t.cellSpacing
+    )
+  }
 }

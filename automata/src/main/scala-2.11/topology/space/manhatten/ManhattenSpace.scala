@@ -4,6 +4,9 @@ import model.map.{MapTopology, RectWithDiagonals}
 import topology.space.CartesianCell
 import topology.{CartesianCoordinates, CartesianProjection, Neighbourhood, Space}
 
+import scalaz.std.option._
+import scalaz.syntax.std.boolean._
+
 case class ManhattenSpace(width: Int, height: Int, wrapX: Boolean, wrapY: Boolean)
   extends Space[CartesianCell]
   with CartesianProjection[CartesianCell] {
@@ -20,7 +23,11 @@ case class ManhattenSpace(width: Int, height: Int, wrapX: Boolean, wrapY: Boolea
     height.toDouble
 
   def getMapTopology: MapTopology =
-    MapTopology(RectWithDiagonals, wrapX, wrapY, 1.0)
+    MapTopology(
+      RectWithDiagonals,
+      wrapX ? some(projectionWidth) | None,
+      wrapY ? some(projectionHeight) | None,
+      1.0)
 
   def cellCoordinates(c: CartesianCell): CartesianCoordinates =
     CartesianCoordinates(c.x,c.y)
