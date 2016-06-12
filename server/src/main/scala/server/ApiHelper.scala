@@ -42,7 +42,9 @@ object ApiHelper {
   def success[A](a: A): TaskResponseOr[A] = wrap(a.right)
 
   def wrapM[A](oneOf: Failure \/ A): TaskFailureOr[A] = EitherT.eitherT { oneOf.point[Task]}
-  def wrapM[A](t: Task[A]): TaskFailureOr[A] =  t.liftM[MonadFailureOr]
+  def wrapM[A](t: Task[A]): TaskFailureOr[A] = t.liftM[MonadFailureOr]
+  def wrapTM[A](oneOf: Failure \/ Task[A]): TaskFailureOr[A] =
+    oneOf.fold(f => wrapM(f.left), ta => wrapM(ta))
   def successM[A](a: A): TaskFailureOr[A] = wrapM(a.right)
 
   def join[A](result: TaskFailureOr[A])(implicit enc: EncodeJson[A]): Task[Response] =

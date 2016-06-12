@@ -21,5 +21,8 @@ object AscentService {
 
     case req@(GET -> Root / "games" / gameId / "maps" / mapId / "metadata") =>
       Maps.getMapMetadata(req, GameId(gameId), MapId(mapId))
+
+    case req@(POST -> Root / "games" / gameId / "update") =>
+      Game.update(req, GameId(gameId))
   }
 }

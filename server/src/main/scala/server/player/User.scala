@@ -5,6 +5,9 @@ import org.http4s.Request
 import server.ApiHelper._
 import server.Game
 import server.map.{GameMap, MapView}
+import server.util.stm.FreeSTM._
+import server.util.stm.TVar
+
 
 final case class User(maps: Map[MapId, MapView])
 
@@ -12,7 +15,16 @@ object User {
   def getCurrentUser(req: Request): TaskFailureOr[User] = {
     for {
       testGame <- Game.getGame(Game.testGameId)
-    } yield User(testGame.maps.mapValues(mapViewForMap))
+      maps <- testGame.applyToMaps(extractMapView)
+    } yield User(maps.toMap)
+  }
+
+  private def extractMapView(t: TVar[GameMap]) = wrapM {
+    atomically {
+      for {
+        m <- readTVar(t)
+      } yield mapViewForMap(m)
+    }
   }
 
   private def mapViewForMap(gameMap: GameMap) = {

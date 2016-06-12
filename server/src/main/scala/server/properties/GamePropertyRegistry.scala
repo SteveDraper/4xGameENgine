@@ -1,9 +1,12 @@
 package server.properties
 
+import java.util.concurrent.ThreadLocalRandom
+
 import model.Span
 import state.property.DoubleProperty.DoubleProperty
 import state.property.{BasicSparseVectorProperty, PropertyId, PropertyMapState, PropertyUpdater}
 import topology.Cell
+import server.util.SpanOps._
 
 object GamePropertyRegistry extends PropertyRegistry[DoubleProperty, BasicSparseVectorProperty[DoubleProperty]] {
   val heightSpan = Span(-10.0,10.0)
@@ -18,7 +21,8 @@ object GamePropertyRegistry extends PropertyRegistry[DoubleProperty, BasicSparse
 
   private def heightUpdater: PropertyUpdater[DoubleProperty] = new PropertyUpdater[DoubleProperty] {
     def update[C <: Cell, R](initialValue: DoubleProperty, id: PropertyId, cellState: (C) => R, parentLens: (R) => PropertyMapState[DoubleProperty], neighbours: Traversable[C]): DoubleProperty = {
-      ???
+      //  For now height update is just a small random perturbation
+      heightSpan.clamp(initialValue + ThreadLocalRandom.current.nextDouble(1.0) - 0.5)
     }
   }
 }

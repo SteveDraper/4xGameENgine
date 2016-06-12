@@ -22,7 +22,8 @@ libraryDependencies ++= Seq(
   "org.http4s" %% "http4s-blaze-server" % http4sVersion,
   "org.http4s" %% "http4s-blaze-client" % http4sVersion,
   "org.http4s" %% "http4s-argonaut" % http4sVersion,
-  "oncue.knobs" %% "core" % "3.3.3"
+  "oncue.knobs" %% "core" % "3.3.3",
+  "org.scala-stm" %% "scala-stm" % "0.7"
 )
 
 mainClass in (Compile,run) := Some("server.ServerApp")

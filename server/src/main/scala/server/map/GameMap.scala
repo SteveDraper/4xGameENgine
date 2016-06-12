@@ -12,7 +12,10 @@ import state.property.DoubleProperty.DoubleProperty
 
 final case class GameMap(id: MapId,
                          description: String,
-                         mapData: CartesianSpaceMap[SimpleCompositePropertyCellState])
+                         mapData: CartesianSpaceMap[SimpleCompositePropertyCellState]) {
+  def update =
+    GameMap(id, description, mapData.run)
+}
 
 object GameMap {
   def buildTestMap(n: Int, id: MapId) = {
