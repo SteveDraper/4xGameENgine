@@ -15,7 +15,8 @@ require.config({
 		modhexpixi: 'js/modhexpixi',
 		hexPixi: 'lib/hexPixi',
 		gamemap: 'js/hexgamemap',
-		apihelper: 'js/apihelper'
+		apihelper: 'js/apihelper',
+		world: 'js/world'
 
     },
     jsx: {
@@ -24,16 +25,20 @@ require.config({
 });
 
 // define(['jquery', 'react', 'jsx!js/app'], function($, React, App){
-define(['jquery', 'gamemap', 'apihelper'], function($, HexGameMap, helper){
+define(['jquery', 'gamemap', 'apihelper', 'world'], function($, HexGameMap, helper, World){
 
 /*    var AppElement = React.createElement(App);
     React.render(AppElement, document.body);
 */
+    var world = new World();
+    var gameMap =  new HexGameMap({ world: world }).initialize({
+      el: $('#mainmap'),
+      hexSize: 20, // px
+    });
 
-    new HexGameMap().initialize({
-        el: $('#mainmap'),
-        hexSize: 40, // px
-    }).fetch({ leftX: 0, rightX: 10, topY: 0, bottomY: 10});
+    world.fetchProperties(function(){
+        gameMap.fetchMapArea({ leftX: -0, rightX: 40, topY: 0, bottomY: 40});
+    });
 });
 
 

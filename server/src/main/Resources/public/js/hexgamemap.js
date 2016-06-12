@@ -3,15 +3,16 @@ define([ 'pixi', 'modhexpixi', 'jquery', 'underscore', 'apihelper'
     "use strict";
 
     /*
-     *
+     * TODO: Decouple views of map from model.
      */
     function GameMap(options){
         var opts = options || {};
         // model initialization
         this.gameId = opts.gameId || 'test';
-        this.mapId = opts.mapId || 'test';
+        this.mapId = opts.mapId || 'testLarge';
         this.mapCells = [];
         this.map = null;
+        this.world = opts.world;
         this.uri = "http://localhost:9600/games/" + this.gameId +"/maps/" + this.mapId;
         this.queryString = _.template("leftX=<%= leftX %>&rightX=<%= rightX %>&topY=<%= topY %>&bottomY=<%= bottomY %>");
         this.stage = new pixi.Container();
@@ -28,7 +29,7 @@ define([ 'pixi', 'modhexpixi', 'jquery', 'underscore', 'apihelper'
     }
 
     /*
-     * Deals with view setup
+     * Deals with view setup.
      */
     GameMap.prototype.initialize = function(options){
         var opts = _.defaults(options, { mapWidth: 10, mapHeight: 8, hexSize: 40 });
@@ -57,6 +58,10 @@ define([ 'pixi', 'modhexpixi', 'jquery', 'underscore', 'apihelper'
                 hexLineWidth: 2,
                 hexSize: opts.hexSize,
                 showCoordinates: true,
+                cellColor: function(){
+                    // 'this' is cell, 'self' is map!!!
+                    return helper.terrainColor(this.data, self.world.elevationBounds, {})
+                },
                 textures: ["images/texture/grassTexture.jpg", "images/texture/waterTexture.jpg"],
                 // TODO replace terrain types functions for determining color, texture based on game cell properties
                 terrainTypes: [
@@ -91,11 +96,9 @@ define([ 'pixi', 'modhexpixi', 'jquery', 'underscore', 'apihelper'
     }
 
     /**
-     * bounds - { leftX: nn, rightX: nn, topY: nn, bottomY: nn }
-     * done - function to call after fetched and rendered
+     * done - function to call after fetched
      */
-
-    GameMap.prototype.fetch = function(bounds, done){
+    GameMap.prototype.fetchProperties = function(done){
        var b = _.defaults(bounds || {}, { leftX: -10, rightX: 10, topY: -10, bottomY: 10 });
 
        $.get(
@@ -109,6 +112,38 @@ define([ 'pixi', 'modhexpixi', 'jquery', 'underscore', 'apihelper'
             }.bind(this),
             'json'
        );
+       return this;
+    }
+
+    /**
+     * bounds - { leftX: nn, rightX: nn, topY: nn, bottomY: nn }
+     * done - function to call after fetched and rendered
+     */
+    GameMap.prototype.fetchMapArea = function(bounds, done){
+       var b = _.defaults(bounds || {}, { leftX: -10, rightX: 10, topY: -10, bottomY: 10 });
+       var world = this.world;
+       $.get(
+            this.uri + '?' + this.queryString(b),
+            {},
+            function(data){
+                var cells = data.cells.map(function(c){
+                    return {
+                        location: {
+                            x: c.location.x,
+                            y: c.location.y,
+                            z: helper.elevation(c)
+                        },
+                        color: helper.terrainColor(c, world.elevationBounds, {})
+                    }
+                });
+                this.mapCells = helper.indexCells(cells);
+                this.setTopology(data.topology);
+                this.render();
+                if (done) { done(); };
+            }.bind(this),
+            'json'
+       );
+       return this;
     }
 
     /*
@@ -117,6 +152,7 @@ define([ 'pixi', 'modhexpixi', 'jquery', 'underscore', 'apihelper'
     GameMap.prototype.render = function(){
         this.map.generateMap(this.mapCells, this.scalingFactor);
         this.$el.empty().append(this.renderer.view);
+        return this;
     }
 
     return GameMap;

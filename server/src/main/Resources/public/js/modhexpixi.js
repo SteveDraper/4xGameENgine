@@ -12,7 +12,7 @@ define([ 'pixi', 'hexPixi', 'underscore'
      * Store game cell data, and override default center of (0, 0)
      */
     hexPixi.GameCell = function(rowNo, columnNo, center, data){
-        this.data = data || {};
+        this.data = _.defaults(data, { color: 0xffffff });
         var cell = hexPixi.Cell.call(this, rowNo, columnNo, data.terrainIndex);
         this.center = center;
         return cell;
@@ -26,20 +26,18 @@ define([ 'pixi', 'hexPixi', 'underscore'
 
     // override to display game coordinates, not cell indexes
     hexPixi.GameCell.prototype.coordinateText = function(){
-        return this.locationForDisplay().x + ", " + this.locationForDisplay().y;
+        var loc = this.locationForDisplay();
+        return loc.x + ", " + loc.y + ": " + loc.z;
     }
 
-    // we have pre-calculated the cell center
-    //hexPixi.GameCell.prototype.getCellCenter = function(){
-    //    return this.center;
-    //}
-
     hexPixi.GameCell.prototype.locationForDisplay = function(precision){
-        var loc = self.data.location;
+        function toP(n){ return typeof n === 'number' ? n.toPrecision(p) : ''; }
+        var loc = this.data.location;
         var p = precision || 2;
         return {
-            x: typeof loc.x === 'number' ? loc.x.toPrecision(p) : '',
-            y: typeof loc.y === 'number' ? loc.y.toPrecision(p) : ''
+            x: toP(loc.x),
+            y: toP(loc.y),
+            z: toP(loc.z),
         };
     }
 
@@ -47,7 +45,7 @@ define([ 'pixi', 'hexPixi', 'underscore'
         return hexPixi.Map.apply(this, arguments);
     }
 
-    hexPixi.GameMap.prototype = _.create(hexPixi.GameMap.prototype);
+    hexPixi.GameMap.prototype = _.create(hexPixi.Map.prototype);
 
     hexPixi.GameMap.prototype.generateMap = function(cellArray, scalingFactor){
         // Generate from cell data as provided by server
@@ -69,12 +67,18 @@ define([ 'pixi', 'hexPixi', 'underscore'
                     x: cell.location.x * scale * self.options.hexSize + self.xOffset,
                     y: cell.location.y * scale * self.options.hexSize + self.yOffset
                 }
-                // Temporary random terrain type assignment
-                var rnd = Math.floor((Math.random() * self.options.terrainTypes.length));
-                return new hexPixi.GameCell(rowIndex, colIndex, cellCenter, _.extend({ terrainIndex: rnd }, cell));
+
+                return new hexPixi.GameCell(rowIndex, colIndex, cellCenter, cell);
             });
         });
         this.createSceneGraph();
+    }
+
+    hexPixi.GameMap.prototype.getCellColor = function(cell){
+        if (cell.data && cell.data.color) {
+            return cell.data.color;
+        }
+        return hexPixi.Map.prototype.getCellColor.apply(this, arguments);
     }
 
     return hexPixi;
