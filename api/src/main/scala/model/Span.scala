@@ -5,9 +5,7 @@ import argonaut.CodecJson
 import model.map.{Point, Rectangle}
 import monocle.Lens
 
-final case class Span(from: Double, to: Double) {
-  def size = to - from
-}
+final case class Span(from: Double, to: Double)
 
 object Span {
   implicit val rectxLens =

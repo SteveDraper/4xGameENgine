@@ -17,7 +17,7 @@ import scalaz.syntax.std.option._
 import scalaz.std.option._
 import scalaz.syntax.foldable._
 import scalaz.std.list._
-import RegionOps._
+import server.util.SpanOps._
 import AreaOps._
 import SimpleRegion._
 import monocle.Lens

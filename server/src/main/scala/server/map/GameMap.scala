@@ -2,14 +2,13 @@ package server.map
 
 import map.CartesianSpaceMap
 import model.map.MapId
-import server.ApiHelper._
 import server.properties.GamePropertyRegistry
-import state.property.DoubleProperty.DoubleProperty
 import state.property.{BasicSparseVectorProperty, PropertyMapState, SimpleCompositePropertyCellState}
-import topology.{CartesianProjection, Space}
+import topology.CartesianProjection
 import topology.space.CartesianCell
+import server.util.SpanOps._
+import state.property.DoubleProperty.DoubleProperty
 
-import scalaz.syntax.either._
 
 final case class GameMap(id: MapId,
                          description: String,
@@ -30,9 +29,10 @@ object GameMap {
     val cellLocation = topology.cellCoordinates(cell).toPoint
     val distanceFrom5_5 =
       Math.sqrt((cellLocation.x - 5.0)*(cellLocation.x - 5.0) + (cellLocation.y - 5.0)*(cellLocation.y - 5.0))
+    val height = GamePropertyRegistry.heightSpan.clamp(10.0 - distanceFrom5_5)
 
     SimpleCompositePropertyCellState(
-      PropertyMapState.buildFrom[DoubleProperty](GamePropertyRegistry.scalarUpdaters,_=> Math.min(GamePropertyRegistry.maxHeight,distanceFrom5_5)),
+      PropertyMapState.buildFrom[DoubleProperty](GamePropertyRegistry.scalarUpdaters,_=> height),
       PropertyMapState.buildFrom[BasicSparseVectorProperty[DoubleProperty]](GamePropertyRegistry.vectorUpdaters,_=> null))
   }
 }
