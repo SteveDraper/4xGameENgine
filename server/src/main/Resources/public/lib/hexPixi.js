@@ -8,6 +8,10 @@
     Please let me know about any games released using this library or derivative work.
 */
 
+/*
+    Modified by Christine Draper to allow customization of Cell.
+ */
+
 (function(root, factory) {
     if (typeof define == 'function' && define.amd) {
         define(['pixi'], factory);
@@ -62,14 +66,12 @@
     };
 
     // The hexPixi.Cell object represents one map hex cell.
-    hp.Cell = function (rowNo, columnNo, center, data) {
+    hp.Cell = function (rowNo, columnNo, terrainIndex) {
         var self = this;
-        self.data = data || {};
         self.row = rowNo;
         self.column = columnNo;
-        self.center = center || { x: 0, y: 0 };
-
-        self.terrainIndex = self.data.terrainIndex ? self.data.terrainIndex : 0;
+        self.center = { x: 0, y: 0 };
+        self.terrainIndex = terrainIndex ? terrainIndex : 0;
         self.poly = null; // The cell's poly that is used as a hit area.
         self.outline = null; // The PIXI.Graphics outline of the cell's hex.
         self.inner = null; // If a non-textured cell then this is the PIXI.Graphics of the hex inner, otherwise a PIXI.Sprite.
@@ -89,24 +91,13 @@
             return {
                 row: self.row,
                 column: self.column,
-                terrainIndex: self.terrainIndex,
-                data: self.data
+                terrainIndex: self.terrainIndex
             };
         };
 
-        self.locationForDisplay = function(precision){
-            var loc = self.data.location;
-            var p = precision || 2;
-            return {
-                x: typeof loc.x === 'number' ? loc.x.toPrecision(p) : '',
-                y: typeof loc.y === 'number' ? loc.y.toPrecision(p) : ''
-            };
-        }
-
-        self.setCenter = function(xFactor, yFactor){
-            var loc = self.data.location;
-            self.center = { x: loc.x * xFactor, y: loc.y * yFactor };
-            return self;
+        // CD: Allow override of coordinate text
+        self.coordinateText = function(){
+            return self.column.toString() + ", " + self.row.toString();
         }
     };
 
@@ -130,7 +121,7 @@
                 hexLineColor: 0x909090,
                 // The width in pixels of the hex outline.
                 hexLineWidth: 2,
-                // scaling from location data
+                // If true then the hex's coordinates will be visible on the hex.
                 showCoordinates: false,
                 // Callback function (cell) that handles a hex being clicked on or tapped.
                 onHexClick: null,
@@ -151,7 +142,6 @@
         self.hexes = new pixi.Graphics();
         self.container = new pixi.Container();
         self.pixiStage = null;
-        self.options = null;
         self.options = null;
         self.cells = [];
         self.camera = new hp.Camera(self);
@@ -391,14 +381,16 @@
 
         // Takes a cell and creates all the graphics to display it.
         function createCell(cell) {
-            // cell.center = getCellCenter(cell.column, cell.row, self.options.coordinateSystem);
+            // CD: Use pre-calculated cell center
+            cell.center = cell.center || getCellCenter(cell.column, cell.row, self.options.coordinateSystem);
 
             // Generate poly first then use poly to draw hex and create masks and all that.
             cell.poly = createHexPoly();
 
             if (self.options.showCoordinates) {
                 cell.text = new pixi.Text("1", { font: "10px Arial", fill: "black", dropShadow: "true", dropShadowDistance: 1, dropShadowColor: "white" });
-                cell.text.text = cell.locationForDisplay().x + ", " + cell.locationForDisplay().y;
+                // CD: Use overrideable method for coordinate text
+                cell.text.text = cell.coordinateText();
                 cell.text.position.x = -Math.round((cell.text.width / 2));
                 cell.text.position.y = 8 - Math.round(self.options.hexHeight / 2);
             }
@@ -539,7 +531,8 @@
         };
 
         // Clears the scene graph and recreates it from self.cells.
-        function createSceneGraph() {
+        // CD: Make into method so can be called by derived class
+        self.createSceneGraph = function() {
             var cell = null,
                 row = null,
                 rowIndex = 0,
@@ -582,12 +575,12 @@
                 self.cells.push([]);
                 for (var column = 0; column < self.options.mapWidth; column += 2) {
                     var exportedCell = exportedMap.cells[row][column];
-                    var cell = new hp.Cell(exportedCell.row, exportedCell.column, exportedCell.data);
+                    var cell = new hp.Cell(exportedCell.row, exportedCell.column, exportedCell.terrainIndex);
                     self.cells[cell.row].push(cell);
                 }
                 for (var column = 1; column < self.options.mapWidth; column += 2) {
                     var exportedCell = exportedMap.cells[row][column];
-                    var cell = new hp.Cell(exportedCell.row, exportedCell.column, exportedCell.data);
+                    var cell = new hp.Cell(exportedCell.row, exportedCell.column, exportedCell.terrainIndex);
                     self.cells[cell.row].push(cell);
                 }
             }
@@ -623,37 +616,12 @@
                 }
                 for (var column = 1; column < self.options.mapWidth; column += 2) {
                     var rnd = Math.floor((Math.random() * self.options.terrainTypes.length));
-                    var cell = new hp.Cell(row, column, { terrainIndex: rnd });
+                    var cell = new hp.Cell(row, column, rnd);
                     self.cells[cell.row].push(cell);
                 }
             }
             createSceneGraph();
         };
-
-        // Generate from cell data as provided by server
-        // TODO make sensitive to mapWidth mapHeight. Also add a mapCenter.
-        self.generateMap = function(cellArray, scalingFactor){
-            if (cellArray.length === 0) { return; }
-
-            var scale = scalingFactor || 1.0;
-            var firstLoc = cellArray[0][0].location;
-            var secondLoc = cellArray[1] ? cellArray[1][0].location : cellArray[0][0].location;
-            self.xOffset = self.options.hexSize * (1 - scale * Math.min(firstLoc.x, secondLoc.x));
-            self.yOffset = self.options.hexSize * (1 - scale * firstLoc.y);
-
-
-            self.cells = _.map(cellArray, function(row, rowIndex){
-                return _.map(row, function(cell, colIndex){
-                    var cellCenter = {
-                        x: cell.location.x * scale * self.options.hexSize + self.xOffset,
-                        y: cell.location.y * scale * self.options.hexSize + self.yOffset
-                    }
-                    var rnd = Math.floor((Math.random() * self.options.terrainTypes.length));
-                    return new hp.Cell(rowIndex, colIndex, cellCenter, _.extend({ terrainIndex: rnd }, cell));
-                });
-            });
-            createSceneGraph();
-        },
 
         self.generateBlankMap = function () {
             for (var row = 0; row < self.options.mapHeight; row++) {

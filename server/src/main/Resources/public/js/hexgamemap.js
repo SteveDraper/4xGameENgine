@@ -1,4 +1,4 @@
-define([ 'pixi', 'hexPixi', 'jquery', 'underscore', 'apihelper'
+define([ 'pixi', 'modhexpixi', 'jquery', 'underscore', 'apihelper'
     ], function(pixi, hexPixi, $, _, helper) {
     "use strict";
 
@@ -49,11 +49,16 @@ define([ 'pixi', 'hexPixi', 'jquery', 'underscore', 'apihelper'
             return {
                 mapWidth: opts.mapWidth,
                 mapHeight: opts.mapHeight,
+                // Our coord system is always 'flat top' but we don't know if it is odd-q or
+                // even-q until we get multiple rows of cells.  Setting the system to 'even-q' makes sure
+                // the hexes are drawn as flat top. We don't need odd-q/even-q for offset because the game server
+                // calculates cell centers.
                 coordinateSystem: 1,
                 hexLineWidth: 2,
                 hexSize: opts.hexSize,
                 showCoordinates: true,
                 textures: ["images/texture/grassTexture.jpg", "images/texture/waterTexture.jpg"],
+                // TODO replace terrain types functions for determining color, texture based on game cell properties
                 terrainTypes: [
                     { name: "dirt", color: 0x9B5523 },
                     { name: "sand", color: 0xdBd588 },
@@ -73,7 +78,7 @@ define([ 'pixi', 'hexPixi', 'jquery', 'underscore', 'apihelper'
             };
         }.bind(this);
 
-        this.map = new hexPixi.Map(stage, getOptions());
+        this.map = new hexPixi.GameMap(stage, getOptions());
         return this;
     }
 

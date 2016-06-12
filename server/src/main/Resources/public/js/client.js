@@ -12,6 +12,7 @@ require.config({
 		jsx: 'lib/require-jsx',
 		text: 'lib/require-text',
 		pixi: 'lib/pixi.min',
+		modhexpixi: 'js/modhexpixi',
 		hexPixi: 'lib/hexPixi',
 		gamemap: 'js/hexgamemap',
 		apihelper: 'js/apihelper'
