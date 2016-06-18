@@ -1,14 +1,13 @@
-define([ 'react', 'jsx!gameboard'
-    ], function(React, GameBoard) {
+define([ 'react', gamemap, 'jsx!controlpanel'
+    ], function(React, HexGameMap, ControlPanel) {
 	"use strict";
 
     var App = function() {
         return React.createClass({
             displayName: 'app',
-            mixins: [React.addons.PureRenderMixin],
             render: function() {
                 return (
-                    <GameBoard />
+                    <ControlPanel />
                 );
             }
         });

@@ -80,6 +80,14 @@ define([ 'pixi', 'hexPixi', 'underscore'
         }
         return hexPixi.Map.prototype.getCellColor.apply(this, arguments);
     }
+    
+    /*
+     * Merge specified options into current options and reset the map
+     */
+    hexPixi.GameMap.prototype.updateOptions = function(options){
+        var opts = _.extend({}, this.options, options);
+        return this.reset(opts);
+    }
 
     return hexPixi;
 });

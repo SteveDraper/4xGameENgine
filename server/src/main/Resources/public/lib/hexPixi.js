@@ -12,15 +12,7 @@
     Modified by Christine Draper to allow customization of Cell.
  */
 
-(function(root, factory) {
-    if (typeof define == 'function' && define.amd) {
-        define(['pixi'], factory);
-    } else if (typeof exports == 'object') {
-        module.exports = factory(require('pixi'));
-    } else {
-        root.hexPixi = factory(root.PIXI);
-    }
-}(this, function(pixi) {
+define(['pixi', 'underscore'], function(pixi) {
     'use strict';
 
     var hp = {};
@@ -33,8 +25,7 @@
         { name: "even-r", isFlatTop: false, isOdd: false }];
 
     hp.Camera = function (amap) {
-        var self = this,
-            position = { x: 0, y: 0 },
+        var position = { x: 0, y: 0 },
             map = amap;
 
         function updateSceneGraph() {
@@ -42,7 +33,7 @@
             map.container.position.y = position.y;
         }
 
-        self.position = function (x, y) {
+        this.position = function (x, y) {
             var result = position;
 
             if (x && y) {
@@ -56,215 +47,174 @@
     };
 
     hp.GameObject = function (type, name, properties, onUpdate) {
-        var self = this;
-        self.type = type;
-        self.name = name;
-        self.onUpdate = onUpdate;
-        self.cell = null;
-        self.isVisible = false;
-        self.properties = properties;
+        this.type = type;
+        this.name = name;
+        this.onUpdate = onUpdate;
+        this.cell = null;
+        this.isVisible = false;
+        this.properties = properties;
     };
 
     // The hexPixi.Cell object represents one map hex cell.
     hp.Cell = function (rowNo, columnNo, terrainIndex) {
-        var self = this;
-        self.row = rowNo;
-        self.column = columnNo;
-        self.center = { x: 0, y: 0 };
-        self.terrainIndex = terrainIndex ? terrainIndex : 0;
-        self.poly = null; // The cell's poly that is used as a hit area.
-        self.outline = null; // The PIXI.Graphics outline of the cell's hex.
-        self.inner = null; // If a non-textured cell then this is the PIXI.Graphics of the hex inner, otherwise a PIXI.Sprite.
-        self.hex = null; // The parent container of the hex's graphics objects.
-        self.isEmpty = null; // The cell is empty if set to true.
-        self.gameObjects = []; // A variable for attaching GameObjects you want (items, people, descriptions).
+        this.row = rowNo;
+        this.column = columnNo;
+        this.center = { x: 0, y: 0 };
+        this.terrainIndex = terrainIndex ? terrainIndex : 0;
+        this.poly = null; // The cell's poly that is used as a hit area.
+        this.outline = null; // The PIXI.Graphics outline of the cell's hex.
+        this.inner = null; // If a non-textured cell then this is the PIXI.Graphics of the hex inner, otherwise a PIXI.Sprite.
+        this.hex = null; // The parent container of the hex's graphics objects.
+        this.isEmpty = null; // The cell is empty if set to true.
+        this.gameObjects = []; // A variable for attaching GameObjects you want (items, people, descriptions).
     };
 
     hp.Cell.prototype.resetGraphics = function () {
-        self.terrainIndex = terrainIndex ? terrainIndex : 0;
-        self.poly = null; // The cell's poly that is used as a hit area.
-        self.outline = null; // The PIXI.Graphics outline of the cell's hex.
-        self.inner = null; // If a non-textured cell then this is the PIXI.Graphics of the hex inner.
-        self.hex = null; // The parent container of the hex's graphics objects.
+        this.terrainIndex = terrainIndex ? terrainIndex : 0;
+        this.poly = null; // The cell's poly that is used as a hit area.
+        this.outline = null; // The PIXI.Graphics outline of the cell's hex.
+        this.inner = null; // If a non-textured cell then this is the PIXI.Graphics of the hex inner.
+        this.hex = null; // The parent container of the hex's graphics objects.
     };
 
     hp.Cell.prototype.toJSON = function () {
         return {
-            row: self.row,
-            column: self.column,
-            terrainIndex: self.terrainIndex
+            row: this.row,
+            column: this.column,
+            terrainIndex: this.terrainIndex
         };
     };
 
     // CD: Allow override of coordinate text
     hp.Cell.prototype.coordinateText = function(){
-        return self.column.toString() + ", " + self.row.toString();
+        return this.column.toString() + ", " + this.row.toString();
     }
 
     // Scene graph heirarchy = pixiState -> container -> hexes
     hp.Map = function (pixiStage, options) {
-        var self = this,
-            defaultOptions = {
-                // The hexPixi.CoordinateSystems index to use for the map.
-                coordinateSystem: 1,
-                // The map's number of cells across (cell column count).
-                mapWidth: 10,
-                // The map's number of cells high (cell row count).
-                mapHeight: 10,
-                // The radius of the hex. Ignored if hexWidth and hexHeight are set to non-null.
-                hexSize: 40,
-                // The pixel width of a hex.
-                hexWidth: null,
-                // The pixel height of a hex.
-                hexHeight: null,
-                // The color to use when drawing hex outlines.
-                hexLineColor: 0x909090,
-                // The width in pixels of the hex outline.
-                hexLineWidth: 2,
-                // If true then the hex's coordinates will be visible on the hex.
-                showCoordinates: false,
-                // Callback function (cell) that handles a hex being clicked on or tapped.
-                onHexClick: null,
-                // Specify the types of terrain available on the map. Map cells reference these terrain
-                // types by index. Add custom properties to extend functionality.
-                terrainTypes: [{ name: "empty", color: 0xffffff, isEmpty: true }],
-                // Array of strings that specify the url of a texture. Can be referenced by index in terrainType.
-                textures: [],
-                // An array of GameObjects. These are the players, nps, items, everything other than the map and ui.
-                gameObjects: [],
-                // This is the pixel height specifying an area of overlap for hex cells. Necessary when
-                // working with isometric view art systems.
-                hexBottomPad: 0,
-                onAssetsLoaded: function () { }
-            };
+        this.defaultOptions = {
+            // The hexPixi.CoordinateSystems index to use for the map.
+            coordinateSystem: 1,
+            // The map's number of cells across (cell column count).
+            mapWidth: 10,
+            // The map's number of cells high (cell row count).
+            mapHeight: 10,
+            // The radius of the hex.
+            hexSize: 40,
+            // The color to use when drawing hex outlines.
+            hexLineColor: 0x909090,
+            // The width in pixels of the hex outline.
+            hexLineWidth: 2,
+            // If true then the hex's coordinates will be visible on the hex.
+            showCoordinates: false,
+            // Callback function (cell) that handles a hex being clicked on or tapped.
+            onHexClick: null,
+            // Specify the types of terrain available on the map. Map cells reference these terrain
+            // types by index. Add custom properties to extend functionality.
+            terrainTypes: [{ name: "empty", color: 0xffffff, isEmpty: true }],
+            // Array of strings that specify the url of a texture. Can be referenced by index in terrainType.
+            textures: [],
+            // An array of GameObjects. These are the players, nps, items, everything other than the map and ui.
+            gameObjects: [],
+            // This is the pixel height specifying an area of overlap for hex cells. Necessary when
+            // working with isometric view art systems.
+            hexBottomPad: 0,
+            onAssetsLoaded: function () { }
+        };
+        this.options = {};
+        this.textures = [];
+        this.hexes = new pixi.Graphics();
+        this.container = new pixi.Container();
+        this.pixiStage = pixiStage;
+        this.cells = [];
+        this.camera = new hp.Camera(this);
+        this.cellHighlighter = null;
+        this.inCellCount = 0;
+        this.hexAxis = { x: 0, y: 0 };
+        this.aspectRatio = 1;
 
-        self.textures = [];
-        self.hexes = new pixi.Graphics();
-        self.container = new pixi.Container();
-        self.pixiStage = null;
-        self.options = null;
-        self.cells = [];
-        self.camera = new hp.Camera(self);
-        self.cellHighlighter = null;
-        self.inCellCount = 0;
-        self.hexAxis = { x: 0, y: 0 };
-        self.aspectRatio = 1;
-
-        // Calculates and returns the width of a hex cell.
-        function getHexWidth() {
-            var result = null,
-                cs = hp.CoordinateSystems[self.options.coordinateSystem];
-            result = self.options.hexSize * 2;
-            if (cs.isFlatTop == false) {
-                result = Math.sqrt(3) / 2 * result;
-            }
-
-            return result;
-        }
-
-        // Calculates and returns the height of a hex cell.
-        function getHexHeight() {
-            var result = null,
-                cs = hp.CoordinateSystems[self.options.coordinateSystem];
-            result = self.options.hexSize * 2;
-            if (cs.isFlatTop == true) {
-                result = Math.sqrt(3) / 2 * result;
-            }
-
-            return result;
-        }
-
-
-        // Loads all the textures specified in options.
-        function loadTextures() {
-            self.textures = [];
-
-            if (self.options.textures.length) {
-                var loader = PIXI.loader;
-                loader = new PIXI.loaders.Loader();
-
-        loader.add(self.options.textures);
-
-                // use callback
-                loader.once('complete', self.options.onAssetsLoaded);
-
-                //begin load
-                loader.load();
-
-                for (var i = 0; i < self.options.textures.length; i++) {
-                    self.textures.push(new pixi.Texture.fromImage(self.options.textures[i]));
-                }
-            } else {
-                // No assets to load so just call onAssetsLoaded function to notify game that we are done.
-                self.options.onAssetsLoaded && self.options.onAssetsLoaded();
-            }
-        }
-
-        function extend(obj) {
-            Array.prototype.slice.call(arguments, 1).forEach(function (source) {
-                if (source) {
-                    for (var prop in source) {
-                        if (source[prop].constructor === Object) {
-                            if (!obj[prop] || obj[prop].constructor === Object) {
-                                obj[prop] = obj[prop] || {};
-                                extend(obj[prop], source[prop]);
-                            } else {
-                                obj[prop] = source[prop];
-                            }
-                        } else {
-                            obj[prop] = source[prop];
-                        }
-                    }
-                }
-            });
-            return obj;
-        }
-
-        function _init(options, pixi) {
-            self.options = extend(defaultOptions, options);
-
-            hp.init(pixi);
-
-            // If we are overiding the top-down view method then need to force some settings
-            if (self.options.hexWidth && self.options.hexHeight) {
-                var cs = hp.CoordinateSystems[self.options.coordinateSystem];
-                self.options.hexSize = self.options.hexWidth / 2;
-                self.aspectRatio = self.options.hexHeight / self.options.hexWidth;
-                self.hexAxis.x = cs.isFlatTop ? self.options.hexWidth : ((1 - (Math.sqrt(3) / 2)) * self.options.hexWidth) + self.options.hexWidth;
-                self.hexAxis.y = cs.isFlatTop ? ((1 - (Math.sqrt(3) / 2)) * self.options.hexHeight) + self.options.hexHeight : self.options.hexHeight;
-            } else {
-                self.aspectRatio = 1;
-                self.options.hexWidth = getHexWidth();
-                self.options.hexHeight = getHexHeight();
-                self.hexAxis.x = self.options.hexSize * 2;
-                self.hexAxis.y = self.options.hexSize * 2;
-            }
-
-            if (self.pixiStage == null) {
-                self.pixiStage = pixiStage;
-            }
-
-            self.container.addChild(self.hexes);
-            self.pixiStage.addChild(self.container);
-            self.hexes.clear();
-            loadTextures();
-
-            // Setup cell hilighter
-            var cell = new hp.Cell(0, 0, 0);
-            cell.poly = self.createHexPoly();
-            var chg = self.createDrawHex_internal(cell, true, false);
-            if (chg) {
-                chg.updateLineStyle(3, 0xff5521);
-                self.cellHighlighter = new pixi.Container();
-                self.cellHighlighter.addChild(chg);
-            } else {
-                console.log("Error creating cell hilighter");
-            }
-        }
-
-        _init(options, pixi);
+        this._init(options, pixi);
     };
 
+    // Calculates and returns the width of a hex cell.
+    hp.Map.prototype.getHexWidth = function() {
+        var result = null,
+            cs = hp.CoordinateSystems[this.options.coordinateSystem];
+        result = this.options.hexSize * 2;
+        if (cs.isFlatTop == false) {
+            result = Math.sqrt(3) / 2 * result;
+        }
+
+        return result;
+    }
+
+    // Calculates and returns the height of a hex cell.
+    hp.Map.prototype.getHexHeight = function() {
+        var result = null,
+            cs = hp.CoordinateSystems[this.options.coordinateSystem];
+        result = this.options.hexSize * 2;
+        if (cs.isFlatTop == true) {
+            result = Math.sqrt(3) / 2 * result;
+        }
+
+        return result;
+    }
+
+    // Loads all the textures specified in options.
+    hp.Map.prototype.loadTextures = function() {
+        this.textures = [];
+
+        if (this.options.textures.length) {
+            var loader = PIXI.loader;
+            loader = new PIXI.loaders.Loader();
+
+            loader.add(this.options.textures);
+
+            // use callback
+            loader.once('complete', this.options.onAssetsLoaded);
+
+            //begin load
+            loader.load();
+
+            for (var i = 0; i < this.options.textures.length; i++) {
+                this.textures.push(new pixi.Texture.fromImage(this.options.textures[i]));
+            }
+        } else {
+            // No assets to load so just call onAssetsLoaded function to notify game that we are done.
+            this.options.onAssetsLoaded && this.options.onAssetsLoaded();
+        }
+    }
+
+
+    hp.Map.prototype._init = function(options, pixi) {
+
+       this.options = _.extend({}, this.defaultOptions, options);
+
+       hp.init(pixi);
+
+       this.aspectRatio = 1;
+       this.options.hexWidth = this.getHexWidth();
+       this.options.hexHeight = this.getHexHeight();
+       this.hexAxis.x = this.options.hexSize * 2;
+       this.hexAxis.y = this.options.hexSize * 2;
+
+       this.container.addChild(this.hexes);
+       this.pixiStage.addChild(this.container);
+       this.hexes.clear();
+       this.loadTextures();
+
+       // Setup cell hilighter
+       var cell = new hp.Cell(0, 0, 0);
+       cell.poly = this.createHexPoly();
+       var chg = this.createDrawHex_internal(cell, true, false);
+       if (chg) {
+           chg.updateLineStyle(3, 0xff5521);
+           this.cellHighlighter = new pixi.Container();
+           this.cellHighlighter.addChild(chg);
+       } else {
+           console.log("Error creating cell hilighter");
+       }
+    }
 
     hp.Map.prototype.getCellColor = function(cell){
         var color = this.options.terrainTypes[cell.terrainIndex].color;
@@ -389,7 +339,7 @@
             this.cellHighlighter = null;
         }
 
-        _init(options, pixi);
+        this._init(options, pixi);
     };
 
     // Clears the scene graph and recreates it from this.cells.
@@ -753,4 +703,4 @@
     };
 
     return hp;
-}));
+});

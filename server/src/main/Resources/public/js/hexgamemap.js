@@ -94,7 +94,7 @@ define([ 'pixi', 'modhexpixi', 'jquery', 'underscore', 'apihelper'
         if (!(topology && topology.cellSpacing)) { return; }
         this.scalingFactor = helper.scalingFactor(topology.cellSpacing);
     }
-
+    
     /**
      * done - function to call after fetched
      */
@@ -142,7 +142,9 @@ define([ 'pixi', 'modhexpixi', 'jquery', 'underscore', 'apihelper'
                 if (done) { done(); };
             }.bind(this),
             'json'
-       );
+       ).fail(function(jqXHR, status, err){
+        alert(status);
+       });
        return this;
     }
 
@@ -153,6 +155,14 @@ define([ 'pixi', 'modhexpixi', 'jquery', 'underscore', 'apihelper'
         this.map.generateMap(this.mapCells, this.scalingFactor);
         this.$el.empty().append(this.renderer.view);
         return this;
+    }
+    
+    /*
+     * Currently renders all map cells. TODO: render just a subarea
+     */
+    GameMap.prototype.updateMapOptions = function(opts){
+       this.map.updateOptions(opts);
+       return this;
     }
 
     return GameMap;

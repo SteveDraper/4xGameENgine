@@ -7,10 +7,11 @@ require.config({
 	paths : {
 		underscore : 'lib/underscore',
 		react: 'lib/react-with-addons',
+		reactdom: 'lib/react-dom',
 		jquery: 'lib/jquery',
-		JSXTransformer: 'lib/jsxtransformer',
-		jsx: 'lib/require-jsx',
-		text: 'lib/require-text',
+//		JSXTransformer: 'lib/jsxtransformer',
+//		jsx: 'lib/require-jsx',
+//		text: 'lib/require-text',
 		pixi: 'lib/pixi.min',
 		modhexpixi: 'js/modhexpixi',
 		hexPixi: 'lib/hexPixi',
@@ -24,17 +25,24 @@ require.config({
     }
 });
 
-// define(['jquery', 'react', 'jsx!js/app'], function($, React, App){
-define(['jquery', 'gamemap', 'apihelper', 'world'], function($, HexGameMap, helper, World){
+define(['jquery', 'gamemap', 'apihelper', 'world', 'js/controlpanel', 'react', 'reactdom'],
+    function($, HexGameMap, helper, World, ControlPanel, React, ReactDOM){
 
-/*    var AppElement = React.createElement(App);
-    React.render(AppElement, document.body);
-*/
+
     var world = new World();
     var gameMap =  new HexGameMap({ world: world }).initialize({
       el: $('#mainmap'),
       hexSize: 20, // px
     });
+
+    var controlPanelElement = React.createElement(
+    	ControlPanel, 
+    	{ 
+    		onBoundsChange: gameMap.fetchMapArea.bind(gameMap),
+    		onHexSizeChange: function(opts){ gameMap.updateMapOptions(opts); }
+    	}
+    );
+    ReactDOM.render(controlPanelElement, document.getElementById('controlpanel'));
 
     world.fetchProperties(function(){
         gameMap.fetchMapArea({ leftX: -0, rightX: 40, topY: 0, bottomY: 40});
