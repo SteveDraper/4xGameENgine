@@ -22,6 +22,7 @@ import AreaOps._
 import SimpleRegion._
 import monocle.Lens
 import server.player.User
+import server.util.RectangleOps._
 
 object Maps extends QueryParamHelper {
   val paramTopY = "topY"
@@ -174,12 +175,13 @@ object Maps extends QueryParamHelper {
         cellState.vectorProperties.toList.map(toVectorProperty))
     }
 
-    val visibleBoundsFilteredCells =
-      map.mapData.cells.filter(boundsChecker(makeBoundsList(view.visibleBounds + view.origin)))
+    val empty: Traversable[CartesianCell] = Nil
     val filteredCells =
-      maybeBounds.fold(
-        visibleBoundsFilteredCells)(bounds =>
-        visibleBoundsFilteredCells.filter(boundsChecker(makeBoundsList(bounds + view.origin))))
+      maybeBounds
+        .fold(
+          map.mapData.cells)(bounds =>
+          bounds.intersect(view.visibleBounds).fold(empty)(clippedBounds =>
+            map.mapData.cells.filter(boundsChecker(makeBoundsList(clippedBounds + view.origin)))))
     MapResponse(
       knownTopology(topology, view),
       Nil,
@@ -192,8 +194,8 @@ object Maps extends QueryParamHelper {
   private def knownTopology(t: MapTopology, view: MapView) = {
     MapTopology(
       t.baseType,
-      t.xWrap.flatMap(d => (Span.rectxLens.get(view.visibleBounds).size >= d) ? some(d) | None),
-      t.yWrap.flatMap(d => (Span.rectyLens.get(view.visibleBounds).size >= d) ? some(d) | None),
+      t.xWrap.flatMap(d => (view.visibleBounds.xspan.size >= d) ? some(d) | None),
+      t.yWrap.flatMap(d => (view.visibleBounds.yspan.size >= d) ? some(d) | None),
       t.cellSpacing
     )
   }
