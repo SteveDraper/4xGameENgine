@@ -1,4 +1,4 @@
-# 4xGameENgine
+# 4xGameEngine
 
 This project is a personal attempt to create a 4x-strategy game engine that will be scalable, flexible, and supportive of online multi-player or offline single-player usage
 
