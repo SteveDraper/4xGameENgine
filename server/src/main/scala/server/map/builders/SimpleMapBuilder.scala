@@ -36,25 +36,29 @@ final class SimpleMapBuilder(seedDensity: Double) extends MapBuilder {
 
   def initialize(s: CartesianSpaceMap[SimpleCompositePropertyCellState]) = {
     for {
-      seedList <- generateLandSeeds(s)
-      seededMap = s.buildFrom(initializeProperties(s.topology, seedList))
+      landSeedList <- generateSeeds(s)
+      oceanSeedList <- generateSeeds(s)
+      seededMap = s.buildFrom(initializeProperties(s.topology, landSeedList, oceanSeedList))
       finalMap <- evolve(seededMap)
     } yield  finalMap
   }
 
-  private def generateLandSeeds(s: CartesianSpaceMap[_]) = {
+  private def generateSeeds(s: CartesianSpaceMap[_]) = {
     val numCells = Math.max(1,(0.5+s.width*s.height*Math.max(0.0,Math.min(1.0,seedDensity))).toInt)
 
     wrapM((1 until numCells).map(_=>Point(rand.nextInt(s.width),rand.nextInt(s.height))).right)
   }
 
   private def initializeProperties(topology: CartesianProjection[CartesianCell],
-                                   seedList: Seq[Point])(cell: CartesianCell): SimpleCompositePropertyCellState = {
+                                   landSeedList: Seq[Point],
+                                   oceanSeedList: Seq[Point])(cell: CartesianCell): SimpleCompositePropertyCellState = {
     val heightVelocity =
-      seedList.contains(Point(cell.x,cell.y)) ?
+      landSeedList.contains(Point(cell.x,cell.y)) ?
         GamePropertyRegistry.heightSpan.clamp(1.0) |
-        GamePropertyRegistry.heightSpan.clamp(-0.01)
-    val height = -1.0
+        (oceanSeedList.contains(Point(cell.x,cell.y)) ?
+          GamePropertyRegistry.heightSpan.clamp(-1.0) |
+        GamePropertyRegistry.heightSpan.clamp(0.0))
+    val height = 0.0
 
     def initialValue(id: PropertyId): Double = id match {
       case `heightPropertyId` => height
@@ -97,11 +101,14 @@ final class SimpleMapBuilder(seedDensity: Double) extends MapBuilder {
       var count = 0;
       var total = 0.0
       neighbourhood.neighbours.foreach(c => {
+        val neighbourValue = parentLens(cellState(c)).find(id).getOrElse(0.0)
+
         count = count+1
-        total = total + parentLens(cellState(c)).find(id).getOrElse(0.0)
+        total = total + neighbourValue*neighbourValue*Math.signum(neighbourValue)
       })
 
-      val average = (initialValue + total)/(count+1)
+      val averageOfSquares = (initialValue*initialValue*Math.signum(initialValue) + total)/(count+1)
+      val average = Math.sqrt(Math.abs(averageOfSquares))*Math.signum(averageOfSquares)
       heightSpan.clamp(average + ThreadLocalRandom.current.nextDouble(0.1) - 0.05)
     }
   }
