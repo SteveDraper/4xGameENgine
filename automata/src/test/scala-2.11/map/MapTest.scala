@@ -8,7 +8,7 @@ object MapTest extends App {
   val numProperties = 10
   val startTime = System.currentTimeMillis()
   var testMap =
-    CartesianSpaceMap(1000,1000,true)(SimpleCompositePropertyCellState.cellStateOps[CartesianCell](1,0))
+    CartesianSpaceMap(1000,1000,true,true,false)(SimpleCompositePropertyCellState.cellStateOps[CartesianCell](1,0))
   val mapCreatedTime = System.currentTimeMillis()
   implicit val stateDoubleValued = SimpleCompositePropertyCellState.stateDoubleValued
   implicit val stateShow = SimpleCompositePropertyCellState.stateShow

@@ -1,10 +1,9 @@
 package state.property
 
-import state.property.DoubleProperty._
-import state.property.{DoubleProperty => _}
+import state.property.PropertyUpdater.DoubleProperty
 import state.test._
 import state.{CellState, CellStateOps}
-import topology.Cell
+import topology.{Cell, Neighbourhood}
 import topology.space.CartesianCell
 
 import scalaz.Show
@@ -33,10 +32,10 @@ final case class SimpleCompositePropertyCellState(value: SimpleComposite) extend
 final case class SimpleCompositePropertyCellState(scalarProperties: PropertyMapState[DoubleProperty],
                                  vectorProperties: PropertyMapState[BasicSparseVectorProperty[Double]]) extends CellState[SimpleCompositePropertyCellState] {
   def get = this
-  def update[C <: Cell,R](cellState: C => R, selfLens: R => SimpleCompositePropertyCellState, neighbours: Traversable[C]): SimpleCompositePropertyCellState = {
+  def update[C <: Cell,R](cellState: C => R, selfLens: R => SimpleCompositePropertyCellState, neighbourhood: Neighbourhood[C]): SimpleCompositePropertyCellState = {
     SimpleCompositePropertyCellState(
-      scalarProperties.update(cellState, scalarLens(selfLens), neighbours),
-      vectorProperties.update(cellState, vectorLens(selfLens), neighbours))
+      scalarProperties.update(cellState, scalarLens(selfLens), neighbourhood),
+      vectorProperties.update(cellState, vectorLens(selfLens), neighbourhood))
   }
 
   private def scalarLens[R](selfLens: R => SimpleCompositePropertyCellState) = { (r: R) =>

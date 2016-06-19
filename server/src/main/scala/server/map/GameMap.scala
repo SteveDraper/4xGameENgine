@@ -1,13 +1,17 @@
 package server.map
 
 import map.CartesianSpaceMap
-import model.map.MapId
+import model.map.{Hex, MapId, RectWithDiagonals, TopologyFamily}
+import server.ApiHelper.TaskFailureOr
+import server.map.builders.{MapBuilder, SimpleMapBuilder}
 import server.properties.GamePropertyRegistry
 import state.property.{BasicSparseVectorProperty, PropertyMapState, SimpleCompositePropertyCellState}
 import topology.CartesianProjection
 import topology.space.CartesianCell
 import server.util.SpanOps._
-import state.property.DoubleProperty.DoubleProperty
+import server.ApiHelper._
+
+import scalaz.syntax.either._
 
 
 final case class GameMap(id: MapId,
@@ -18,24 +22,40 @@ final case class GameMap(id: MapId,
 }
 
 object GameMap {
-  def buildTestMap(n: Int, id: MapId) = {
-    val legalN = 2*(n/2)  //  Must be even
-    val mapSpace =
-      CartesianSpaceMap(legalN,n,true)(SimpleCompositePropertyCellState.cellStateOps[CartesianCell](1,0))
-    GameMap(
+  def  buildMap(id: MapId,
+                description: String,
+                baseTopology: TopologyFamily,
+                widthInCells: Int,
+                heightInCells: Int,
+                wrapX: Boolean,
+                wrapY:Boolean,
+                initializer: MapBuilder) = {
+    val emptyMapSpace = baseTopology match {
+      case Hex => CartesianSpaceMap(widthInCells,heightInCells,true,wrapX,wrapY)(SimpleCompositePropertyCellState.cellStateOps[CartesianCell](1,0))
+      case RectWithDiagonals => CartesianSpaceMap(widthInCells,heightInCells,false,wrapX,wrapY)(SimpleCompositePropertyCellState.cellStateOps[CartesianCell](1,0))
+    }
+
+    for {
+      initialized <- initializer.initialize(emptyMapSpace)
+    } yield GameMap(
       id,
-      s"A $legalN X $n test map",
-      mapSpace.buildFrom(initializeProperties(mapSpace.topology)))
+      description,
+      initialized
+    )
   }
 
-  private def initializeProperties(topology: CartesianProjection[CartesianCell])(cell: CartesianCell): SimpleCompositePropertyCellState = {
-    val cellLocation = topology.cellCoordinates(cell).toPoint
-    val distanceFrom5_5 =
-      Math.sqrt((cellLocation.x - 5.0)*(cellLocation.x - 5.0) + (cellLocation.y - 5.0)*(cellLocation.y - 5.0))
-    val height = GamePropertyRegistry.heightSpan.clamp(10.0 - distanceFrom5_5)
+  def buildTestMap(n: Int, id: MapId): TaskFailureOr[GameMap] = {
+    val initializer = SimpleMapBuilder(0.01)
 
-    SimpleCompositePropertyCellState(
-      PropertyMapState.buildFrom[DoubleProperty](GamePropertyRegistry.scalarUpdaters,_=> height),
-      PropertyMapState.buildFrom[BasicSparseVectorProperty[DoubleProperty]](GamePropertyRegistry.vectorUpdaters,_=> null))
+    val legalN = 2*(n/2)  //  Must be even
+    buildMap(
+      id,
+      s"A $legalN X $n test map",
+      Hex,
+      legalN,
+      n,
+      true,
+      false,
+      initializer)
   }
 }

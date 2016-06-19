@@ -25,7 +25,7 @@ case class CartesianSpaceMap[S]
 
   def run = {
     def updateCell(mcell: AutomataCell[CellState[S],CartesianCell]) = {
-      AutomataCell(mcell.state.update(cellStateValue, identity[S], mcell.localTopology.neighbours), mcell.localTopology)
+      AutomataCell(mcell.state.update(cellStateValue, identity[S], mcell.localTopology), mcell.localTopology)
     }
 
     val newAutoTopology = at.map(updateCell)
@@ -65,10 +65,12 @@ case class CartesianSpaceMap[S]
 
 object CartesianSpaceMap {
   def apply[S](width: Int,
-                height: Int,
-                useHex: Boolean)
+               height: Int,
+               useHex: Boolean,
+               wrapX: Boolean,
+               wrapY: Boolean)
                (implicit cellStateOps: CellStateOps[CartesianCell,S]): CartesianSpaceMap[S] = {
-    val topology: Space[CartesianCell] with CartesianProjection[CartesianCell] = if (useHex) new HexSpace(width, height, true, false) else new ManhattenSpace(width, height, true, false)
+    val topology: Space[CartesianCell] with CartesianProjection[CartesianCell] = if (useHex) new HexSpace(width, height, wrapX, wrapY) else new ManhattenSpace(width, height, true, false)
     val autoTopology: AutomataTopology[CartesianCell,AutomataCell[CellState[S],CartesianCell]] =
       IndexedAutomataTopologyRep[CartesianCell,AutomataCell[CellState[S],CartesianCell]](
         width,

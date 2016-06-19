@@ -49,17 +49,44 @@ object Game {
   val testGameId = GameId("test")
   val smallTestMapId = MapId("test")
   val largeTestMapId = MapId("testLarge")
-  lazy val testGame = buildTestGame
+  var testGame: Game = null //  TODO - STM-ize this and make it a full map
 
-  def buildTestGame =
-    Game(
+  def addGame(id: GameId, game: Game): TaskFailureOr[Unit] = {
+    testGame = game
+
+    wrapM(().right)
+  }
+
+  def getOrAddGame(id: GameId, gameBuilder: => TaskFailureOr[Game]): TaskFailureOr[Game] =
+    if ( testGame == null )
+      for {
+        game <- gameBuilder
+        _ <- addGame(id, game)
+      } yield game
+    else wrapM(testGame.right)
+
+  def removeGame(id: GameId): TaskFailureOr[Unit] = {
+    if ( id == testGameId ) {
+      testGame = null
+
+      wrapM(().right)
+    }
+    else wrapM(notFound(s"Game '$id' not found").left)
+  }
+
+  def buildTestGame: TaskFailureOr[Game] =
+    for {
+      smallMap <- GameMap.buildTestMap(16, smallTestMapId)
+      largeMap <- GameMap.buildTestMap(100, largeTestMapId)
+    } yield Game(
       testGameId,
       Map(
-        smallTestMapId -> TVar(GameMap.buildTestMap(16, smallTestMapId)),
-        largeTestMapId -> TVar(GameMap.buildTestMap(100, largeTestMapId))))
+        smallTestMapId -> TVar(smallMap),
+        largeTestMapId -> TVar(largeMap)))
 
   def getGame(id: GameId) =
-    if ( id == testGameId ) successM(testGame)
+    if ( id == testGameId )
+      getOrAddGame(id, buildTestGame)
     else wrapM(notFound(s"Game '$id' not found").left)
 
   def update(req: Request, id: GameId) = join {
@@ -67,6 +94,10 @@ object Game {
       game <- getGame(id)
       result <- game.update
     } yield ()
+  }
+
+  def reset(req: Request, id: GameId) = join {
+    removeGame(id)
   }
 
   def readMap(t: TVar[GameMap]) = wrapM {

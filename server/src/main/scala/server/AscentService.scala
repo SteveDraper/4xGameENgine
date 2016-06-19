@@ -24,5 +24,8 @@ object AscentService {
 
     case req@(POST -> Root / "games" / gameId / "update") =>
       Game.update(req, GameId(gameId))
+
+    case req@(POST -> Root / "games" / gameId / "reset") =>
+      Game.reset(req, GameId(gameId))
   }
 }

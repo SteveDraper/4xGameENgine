@@ -1,11 +1,9 @@
 package state.test
 
-import state.property.PropertyMapState.PropertyUpdaterMap
 import state.property._
-import state.{CellState, CellStateOps}
+import state.{CellStateOps}
 import topology.space.CartesianCell
-import TestPropertyUpdater._
-import DoubleProperty._
+import state.property.PropertyUpdater.DoubleProperty
 
 
 object TestPropertyCellState {

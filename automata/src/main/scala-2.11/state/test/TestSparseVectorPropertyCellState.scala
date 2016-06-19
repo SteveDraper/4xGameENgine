@@ -1,8 +1,6 @@
 package state.test
 
-import state.{CellState, CellStateOps}
-import state.property.DoubleProperty.DoubleProperty
-import state.property.DoubleProperty._
+import state.{CellStateOps}
 import state.property._
 import topology.space.CartesianCell
 

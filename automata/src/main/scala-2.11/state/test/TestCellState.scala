@@ -2,17 +2,17 @@ package state.test
 
 import map.SpaceMap
 import state.{CellState, CellStateOps}
-import topology.Cell
+import topology.{Cell, Neighbourhood}
 import topology.space.CartesianCell
 
 import scalaz.Show
 
 case class TestCellState(value: Double) extends CellState[Double] {
   def get = value
-  def update[C <: Cell,R](cellState: C => R, selfLens: R => Double, neighbours: Traversable[C]): TestCellState = {
+  def update[C <: Cell,R](cellState: C => R, selfLens: R => Double, neighbourhood: Neighbourhood[C]): TestCellState = {
     var count = 0
     var total = 0.0
-    neighbours.foreach(c => {
+    neighbourhood.neighbours.foreach(c => {
       count = count+1
       total = total + selfLens(cellState(c)) - value
     })

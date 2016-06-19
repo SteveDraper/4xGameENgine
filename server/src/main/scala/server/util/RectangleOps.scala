@@ -12,7 +12,7 @@ trait RectangleOps {
   val r: Rectangle
 
   def xspan = Span.rectxLens.get(r)
-  def yspan = Span.rectxLens.get(r)
+  def yspan = Span.rectyLens.get(r)
   def intersect(other: Rectangle): Option[Rectangle] = {
     for {
       xSpan <- xspan.intersect(other.xspan)

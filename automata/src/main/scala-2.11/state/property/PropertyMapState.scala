@@ -3,7 +3,7 @@ package state.property
 import map.SpaceMap
 import state.CellState
 import state.property.PropertyMapState.PropertyUpdaterMap
-import topology.Cell
+import topology.{Cell, Neighbourhood}
 
 import scala.collection.mutable
 import scala.reflect.ClassTag
@@ -18,13 +18,13 @@ final case class PropertyMapState[P](properties: Array[P], updaters: PropertyUpd
   extends CellState[PropertyMapState[P]]
   with PropertyCollection[P] {
   def get = this
-  def update[C <: Cell,R](cellState: C => R, selfLens: R => PropertyMapState[P], neighbours: Traversable[C]): PropertyMapState[P] = {
+  def update[C <: Cell,R](cellState: C => R, selfLens: R => PropertyMapState[P], neighbourhood: Neighbourhood[C]): PropertyMapState[P] = {
     //  TODO - optimize identity mapping case to minimize GC
     val numProperties = properties.size
     val builder = new Array[P](numProperties)
     var i = 0
     while(i < numProperties) {
-      builder(i) = updaters(i).update(properties(i),PropertyId(i),cellState,selfLens, neighbours)
+      builder(i) = updaters(i).update(properties(i),PropertyId(i),cellState,selfLens, neighbourhood)
       i += 1
     }
     PropertyMapState(builder, updaters)
