@@ -27,25 +27,33 @@ require.config({
 
 define(['jquery', 'gamemap', 'apihelper', 'world', 'js/controlpanel', 'react', 'reactdom'],
     function($, HexGameMap, helper, World, ControlPanel, React, ReactDOM){
-
-
+	
     var world = new World();
     var gameMap =  new HexGameMap({ world: world }).initialize({
       el: $('#mainmap'),
-      hexSize: 20, // px
+      hexSize: 20 // px
     });
 
+    var initialBounds = {
+        leftX : -10,
+        rightX : 20,
+        topY : 0,
+        bottomY : 20
+    }
+
     var controlPanelElement = React.createElement(
-    	ControlPanel, 
-    	{ 
-    		onBoundsChange: gameMap.fetchMapArea.bind(gameMap),
-    		onHexSizeChange: function(opts){ gameMap.updateMapOptions(opts); }
-    	}
-    );
+        	ControlPanel, 
+        	{
+        	    initialBounds: initialBounds,
+        	    initialHexSize: gameMap.map.options.hexSize,
+        		onBoundsChange: gameMap.fetchMapArea.bind(gameMap),
+        		onHexSizeChange: function(opts){ gameMap.updateMapOptions(opts); }
+        	}
+        );
     ReactDOM.render(controlPanelElement, document.getElementById('controlpanel'));
 
     world.fetchProperties(function(){
-        gameMap.fetchMapArea({ leftX: -0, rightX: 40, topY: 0, bottomY: 40});
+        gameMap.fetchMapArea(initialBounds);
     });
 });
 

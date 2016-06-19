@@ -17,8 +17,8 @@ define([ 'pixi', 'modhexpixi', 'jquery', 'underscore', 'apihelper'
         this.queryString = _.template("leftX=<%= leftX %>&rightX=<%= rightX %>&topY=<%= topY %>&bottomY=<%= bottomY %>");
         this.stage = new pixi.Container();
         this.renderer = new pixi.autoDetectRenderer(
-            800,
-            600,
+            1800,
+            1024,
             {
                 antialiasing: false,
                 transparent: false,
