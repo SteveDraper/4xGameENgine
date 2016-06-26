@@ -9,9 +9,9 @@ require.config({
     react: 'lib/react-with-addons',
     reactdom: 'lib/react-dom',
     jquery: 'lib/jquery',
-    //    JSXTransformer: 'lib/jsxtransformer',
-    //    jsx: 'lib/require-jsx',
-    //    text: 'lib/require-text',
+    JSXTransformer: 'lib/jsxtransformer',
+    jsx: 'lib/require-jsx',
+    text: 'lib/require-text',
     pixi: 'lib/pixi.min',
     modhexpixi: 'js/modhexpixi',
     hexPixi: 'lib/hexPixi',
@@ -25,7 +25,7 @@ require.config({
   }
 });
 
-define(['jquery', 'gamemap', 'apihelper', 'world', 'js/controlpanel', 'react', 'reactdom'],
+define(['jquery', 'gamemap', 'apihelper', 'world', 'jsx!js/controlpanel', 'react', 'reactdom'],
 function($, HexGameMap, helper, World, ControlPanel, React, ReactDOM){
 
   var world = new World();
