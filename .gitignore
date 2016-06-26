@@ -2,3 +2,6 @@ target
 .idea
 local.cfg
 *.sc
+.project
+.settings/
+node_modules/

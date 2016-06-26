@@ -1,0 +1,34 @@
+{
+    "rules": {
+        "indent": [
+            "warn", 2
+        ],
+        "quotes": [
+            "warn",
+            "single"
+        ],
+        "semi": [
+            "warn",
+            "always"
+        ]
+    },
+    "env": {
+        "es6": true,
+        "node": true,
+        "browser": true,
+        "amd": true
+    },
+    "extends": ["eslint:recommended", "plugin:react/recommended"],
+    "plugins": ["react"],
+    {
+      "parserOptions": {
+        "ecmaFeatures": {
+          "jsx": true,
+          "modules": true
+        }
+      },
+      "env": {
+        "es6": true
+      }
+    }
+}
